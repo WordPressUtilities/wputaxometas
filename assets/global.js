@@ -10,6 +10,30 @@ var wputaxometas_file_frame,
     wputaxometas_datafor;
 
 var wputh_taxometas_set_media = function() {
+    jQuery('.wpu-taxometas-upload-wrap .x').on('click', function(e) {
+        e.preventDefault();
+        var $this = jQuery(this),
+            $button = false,
+            $preview = false,
+            $parent = false;
+
+        wputaxometas_datafor = $this.data('for');
+        $preview = jQuery('#preview-' + wputaxometas_datafor);
+        $parent = $preview.parent();
+        $button = $parent.find('.wputaxometas_add_media');
+
+        // Delete preview HTML
+        $preview.html('');
+
+        // Change button text
+        $button.html($preview.attr('data-baselabel'));
+
+        // Reset attachment value
+        jQuery('#' + wputaxometas_datafor).attr('value', '');
+
+
+    });
+
     jQuery('.wpu-taxometas-form').on('click', '.wputaxometas_add_media', function(event) {
         event.preventDefault();
         var $this = jQuery(this);

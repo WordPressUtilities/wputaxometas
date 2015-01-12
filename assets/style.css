@@ -4,6 +4,11 @@
   Upload media
 ---------------------------------------------------------- */
 
+.wpu-taxometas-upload-wrap {
+    z-index: 1;
+    position: relative;
+}
+
 .wpu-taxometas-upload-preview {
     display: block;
     width: auto;
@@ -11,4 +16,24 @@
     margin-bottom: 5px;
     max-height: 140px;
     max-width: 170px;
+}
+
+.wpu-taxometas-upload-wrap .x {
+    z-index: 1;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    line-height: 20px;
+    color: #fff;
+    background-color: #333;
+    -webkit-transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+}
+
+.wpu-taxometas-upload-wrap .x:hover {
+    opacity: 0.75;
 }
