@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.3.4
+Version: 0.4
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -59,7 +59,7 @@ class WPUTaxoMetas
 
     function save_extra_taxo_field($t_id) {
         global $taxonomy;
-        if (isset($_POST['term_meta'])) {
+        if (isset($_POST['term_meta']) && wp_verify_nonce($_POST['wpu-taxometas-term-' . $t_id], 'wpu-taxometas-term')) {
             $cat_meta = get_option("wpu_taxometas_term_" . $t_id);
             if (!is_array($cat_meta)) {
                 $cat_meta = array();
@@ -77,6 +77,7 @@ class WPUTaxoMetas
 
     function extra_taxo_field($tag) {
         $t_id = $tag->term_id;
+        wp_nonce_field('wpu-taxometas-term', 'wpu-taxometas-term-' . $t_id);
         $term_meta = get_option("wpu_taxometas_term_" . $t_id);
         foreach ($this->fields as $id => $field) {
             if (in_array($tag->taxonomy, $field['taxonomies'])) {
@@ -123,7 +124,10 @@ class WPUTaxoMetas
                         echo '<textarea rows="5" cols="50" ' . $idname . '>' . esc_textarea($value) . '</textarea>';
                         break;
 
+                    case 'color':
+                    case 'date':
                     case 'email':
+                    case 'number':
                     case 'url':
                         echo '<input type="' . $field['type'] . '" ' . $idname . ' value="' . esc_attr($value) . '">';
                         break;
