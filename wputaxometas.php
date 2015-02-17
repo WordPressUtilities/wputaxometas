@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.4
+Version: 0.5
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -58,21 +58,39 @@ class WPUTaxoMetas
     }
 
     function save_extra_taxo_field($t_id) {
-        global $taxonomy;
-        if (isset($_POST['term_meta']) && wp_verify_nonce($_POST['wpu-taxometas-term-' . $t_id], 'wpu-taxometas-term')) {
-            $cat_meta = get_option("wpu_taxometas_term_" . $t_id);
-            if (!is_array($cat_meta)) {
-                $cat_meta = array();
-            }
-            foreach ($_POST['term_meta'] as $key => $var) {
-                if (isset($this->fields[$key]) && isset($taxonomy) && in_array($taxonomy, $this->fields[$key]['taxonomies'])) {
-                    $cat_meta[$key] = $var;
-                }
-            }
-
-            //save the option array
-            update_option("wpu_taxometas_term_" . $t_id, $cat_meta);
+        if (isset($_POST['term_meta']) && isset($_POST['taxonomy']) && wp_verify_nonce($_POST['wpu-taxometas-term-' . $t_id], 'wpu-taxometas-term')) {
+            $this->update_metas_for_term($t_id, $_POST['taxonomy'], $_POST['term_meta']);
         }
+    }
+
+    function update_metas_for_term($t_id, $taxonomy, $metas) {
+
+        // No values sent
+        if (empty($metas)) {
+            return false;
+        }
+
+        // Term does not exists
+        if (!term_exists($t_id, $taxonomy)) {
+            return false;
+        }
+
+        // Get previous values
+        $cat_meta = get_option("wpu_taxometas_term_" . $t_id);
+        if (!is_array($cat_meta)) {
+            $cat_meta = array();
+        }
+
+        foreach ($metas as $key => $var) {
+
+            // Check if field exists, and is in taxonomies
+            if (isset($this->fields[$key]) && in_array($taxonomy, $this->fields[$key]['taxonomies'])) {
+                $cat_meta[$key] = $var;
+            }
+        }
+
+        // Save the values in an option
+        return update_option("wpu_taxometas_term_" . $t_id, $cat_meta);
     }
 
     function extra_taxo_field($tag) {

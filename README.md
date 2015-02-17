@@ -1,6 +1,8 @@
 Taxo Metas
 =================
 
+[![Build Status](https://travis-ci.org/WordPressUtilities/wputaxometas.svg?branch=master)](https://travis-ci.org/WordPressUtilities/wputaxometas)
+
 Adds extra fields to the taxonomy administration.
 
 How to install :
@@ -14,7 +16,7 @@ How to add fields :
 
 Put the code below in your theme's functions.php file. Add new fields to your convenance.
 
-    add_action( 'wputaxometas_fields', 'set_wputaxometas_fields' );
+    add_filter( 'wputaxometas_fields', 'set_wputaxometas_fields' );
     function set_wputaxometas_fields( $fields ) {
         $fields['category_long_description'] = array(
             'label' => 'Test field',
