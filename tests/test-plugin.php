@@ -28,6 +28,9 @@ class WPUTaxoMetas_Plugin extends WP_UnitTestCase
     // Test adding fields
     function test_update_fields() {
 
+        $user_id = $this->factory->user->create( array( 'role' => 'administrator' ) );
+        wp_set_current_user( $user_id );
+
         add_filter('wputaxometas_fields', 'test_update_fields___set_wputaxometas_fields');
         function test_update_fields___set_wputaxometas_fields($fields) {
             $fields['test_field'] = array(
