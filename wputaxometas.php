@@ -4,15 +4,14 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.5.1
+Version: 0.6
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
 License URI: http://opensource.org/licenses/MIT
 */
 
-class WPUTaxoMetas
-{
+class WPUTaxoMetas {
     function __construct() {
         $this->set_options();
         $this->set_admin_hooks();
@@ -81,10 +80,16 @@ class WPUTaxoMetas
             $cat_meta = array();
         }
 
+        $languages = $this->get_languages();
+
         foreach ($metas as $key => $var) {
+            $new_key = $key;
+            foreach ($languages as $id_lang => $lang) {
+                $new_key = str_replace($id_lang . '__', '', $key);
+            }
 
             // Check if field exists, and is in taxonomies
-            if (isset($this->fields[$key]) && in_array($taxonomy, $this->fields[$key]['taxonomies'])) {
+            if (isset($this->fields[$new_key]) && in_array($taxonomy, $this->fields[$new_key]['taxonomies'])) {
                 $cat_meta[$key] = $var;
             }
         }
@@ -95,70 +100,79 @@ class WPUTaxoMetas
 
     function extra_taxo_field($tag) {
         $t_id = $tag->term_id;
+        $languages = $this->get_languages();
         wp_nonce_field('wpu-taxometas-term', 'wpu-taxometas-term-' . $t_id);
         $term_meta = get_option("wpu_taxometas_term_" . $t_id);
         foreach ($this->fields as $id => $field) {
             if (in_array($tag->taxonomy, $field['taxonomies'])) {
-
-                // Set value
-                $value = '';
-                if (isset($term_meta[$id])) {
-                    $value = stripslashes($term_meta[$id]);
+                if (isset($field['lang']) && $field['lang']) {
+                    foreach ($languages as $id_lang => $language) {
+                        $field['label'] = $field['label'] . ' [' . $id_lang . ']';
+                        $this->load_field_content($id_lang . '__' . $id, $field, $term_meta);
+                    }
                 }
-
-                // Set ID / Name
-                $htmlname = 'term_meta[' . $id . ']';
-                $htmlid = 'term_meta_' . $id;
-                $idname = 'name="' . $htmlname . '" id="' . $htmlid . '"';
-
-                echo '<tr class="form-field wpu-taxometas-form"><th scope="row" valign="top"><label for="' . $htmlid . '">' . $field['label'] . '</label></th>';
-                echo '<td>';
-                switch ($field['type']) {
-                    case 'attachment':
-                        $img = '';
-                        $btn_label = __('Add a picture', 'wputaxometas');
-                        $btn_base_label = $btn_label;
-                        $btn_edit_label = __('Change this picture', 'wputaxometas');
-                        if (is_numeric($value)) {
-                            $image = wp_get_attachment_image_src($value, 'big');
-                            if (isset($image[0])) {
-                                $img = '<img class="wpu-taxometas-upload-preview" src="' . $image[0] . '" alt="" /><span data-for="' . $htmlid . '" class="x">&times;</span>';
-                                $btn_label = $btn_edit_label;
-                            }
-                        }
-                        echo '<div data-baselabel="' . esc_attr($btn_base_label) . '" data-label="' . esc_attr($btn_edit_label) . '" class="wpu-taxometas-upload-wrap" id="preview-' . $htmlid . '">' . $img . '</div>';
-                        echo '<a href="#" data-for="' . $htmlid . '" class="button button-small wputaxometas_add_media">' . $btn_label . '</a>';
-                        echo '<input type="hidden" ' . $idname . ' value="' . $value . '" />';
-                        break;
-
-                    case 'editor':
-                        wp_editor($value, $htmlid, array(
-                            'textarea_name' => $htmlname,
-                            'textarea_rows' => 5
-                        ));
-                        break;
-
-                    case 'textarea':
-                        echo '<textarea rows="5" cols="50" ' . $idname . '>' . esc_textarea($value) . '</textarea>';
-                        break;
-
-                    case 'color':
-                    case 'date':
-                    case 'email':
-                    case 'number':
-                    case 'url':
-                        echo '<input type="' . $field['type'] . '" ' . $idname . ' value="' . esc_attr($value) . '">';
-                        break;
-
-                    default:
-                        echo '<input type="text" ' . $idname . ' value="' . esc_attr($value) . '">';
+                else {
+                    $this->load_field_content($id, $field, $term_meta);
                 }
-                if (isset($field['description'])) {
-                    echo '<br /><span class="description">' . esc_html($field['description']) . '</span>';
-                }
-                echo '</td></tr>';
             }
         }
+    }
+
+    function load_field_content($id, $field, $term_meta) {
+
+        // Set value
+        $value = '';
+        if (isset($term_meta[$id])) {
+            $value = stripslashes($term_meta[$id]);
+        }
+
+        // Set ID / Name
+        $htmlname = 'term_meta[' . $id . ']';
+        $htmlid = 'term_meta_' . $id;
+        $idname = 'name="' . $htmlname . '" id="' . $htmlid . '"';
+
+        echo '<tr class="form-field wpu-taxometas-form"><th scope="row" valign="top"><label for="' . $htmlid . '">' . $field['label'] . '</label></th>';
+        echo '<td>';
+        switch ($field['type']) {
+            case 'attachment':
+                $img = '';
+                $btn_label = __('Add a picture', 'wputaxometas');
+                $btn_base_label = $btn_label;
+                $btn_edit_label = __('Change this picture', 'wputaxometas');
+                if (is_numeric($value)) {
+                    $image = wp_get_attachment_image_src($value, 'big');
+                    if (isset($image[0])) {
+                        $img = '<img class="wpu-taxometas-upload-preview" src="' . $image[0] . '" alt="" /><span data-for="' . $htmlid . '" class="x">&times;</span>';
+                        $btn_label = $btn_edit_label;
+                    }
+                }
+                echo '<div data-baselabel="' . esc_attr($btn_base_label) . '" data-label="' . esc_attr($btn_edit_label) . '" class="wpu-taxometas-upload-wrap" id="preview-' . $htmlid . '">' . $img . '</div>';
+                echo '<a href="#" data-for="' . $htmlid . '" class="button button-small wputaxometas_add_media">' . $btn_label . '</a>';
+                echo '<input type="hidden" ' . $idname . ' value="' . $value . '" />';
+            break;
+            case 'editor':
+                wp_editor($value, $htmlid, array(
+                    'textarea_name' => $htmlname,
+                    'textarea_rows' => 5
+                ));
+            break;
+            case 'textarea':
+                echo '<textarea rows="5" cols="50" ' . $idname . '>' . esc_textarea($value) . '</textarea>';
+            break;
+            case 'color':
+            case 'date':
+            case 'email':
+            case 'number':
+            case 'url':
+                echo '<input type="' . $field['type'] . '" ' . $idname . ' value="' . esc_attr($value) . '">';
+            break;
+            default:
+                echo '<input type="text" ' . $idname . ' value="' . esc_attr($value) . '">';
+        }
+        if (isset($field['description'])) {
+            echo '<br /><span class="description">' . esc_html($field['description']) . '</span>';
+        }
+        echo '</td></tr>';
     }
 
     function set_options() {
@@ -193,6 +207,29 @@ class WPUTaxoMetas
                 $this->fields[$id]['type'] = 'text';
             }
         }
+    }
+
+    private function get_languages() {
+        global $q_config, $polylang;
+        $languages = array();
+
+        // Obtaining from Qtranslate
+        if (isset($q_config['enabled_languages'])) {
+            foreach ($q_config['enabled_languages'] as $lang) {
+                if (!in_array($lang, $languages) && isset($q_config['language_name'][$lang])) {
+                    $languages[$lang] = $q_config['language_name'][$lang];
+                }
+            }
+        }
+
+        // Obtaining from Polylang
+        if (function_exists('pll_the_languages') && is_object($polylang)) {
+            $poly_langs = $polylang->model->get_languages_list();
+            foreach ($poly_langs as $lang) {
+                $languages[$lang->slug] = $lang->name;
+            }
+        }
+        return $languages;
     }
 }
 
