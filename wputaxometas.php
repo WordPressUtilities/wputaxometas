@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.6
+Version: 0.6.1
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -85,9 +85,8 @@ class WPUTaxoMetas {
         foreach ($metas as $key => $var) {
             $new_key = $key;
             foreach ($languages as $id_lang => $lang) {
-                $new_key = str_replace($id_lang . '__', '', $key);
+                $new_key = str_replace($id_lang . '__', '', $new_key);
             }
-
             // Check if field exists, and is in taxonomies
             if (isset($this->fields[$new_key]) && in_array($taxonomy, $this->fields[$new_key]['taxonomies'])) {
                 $cat_meta[$key] = $var;
@@ -105,9 +104,10 @@ class WPUTaxoMetas {
         $term_meta = get_option("wpu_taxometas_term_" . $t_id);
         foreach ($this->fields as $id => $field) {
             if (in_array($tag->taxonomy, $field['taxonomies'])) {
-                if (isset($field['lang']) && $field['lang']) {
+                if (!empty($languages) && isset($field['lang']) && $field['lang']) {
+                    $field_label = $field['label'];
                     foreach ($languages as $id_lang => $language) {
-                        $field['label'] = $field['label'] . ' [' . $id_lang . ']';
+                        $field['label'] = $field_label . ' [' . $id_lang . ']';
                         $this->load_field_content($id_lang . '__' . $id, $field, $term_meta);
                     }
                 }
