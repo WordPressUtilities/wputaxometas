@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.6.1
+Version: 0.7
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -87,6 +87,7 @@ class WPUTaxoMetas {
             foreach ($languages as $id_lang => $lang) {
                 $new_key = str_replace($id_lang . '__', '', $new_key);
             }
+
             // Check if field exists, and is in taxonomies
             if (isset($this->fields[$new_key]) && in_array($taxonomy, $this->fields[$new_key]['taxonomies'])) {
                 $cat_meta[$key] = $var;
@@ -125,6 +126,13 @@ class WPUTaxoMetas {
         if (isset($term_meta[$id])) {
             $value = stripslashes($term_meta[$id]);
         }
+        $field_datas = array(
+            __('Yes', 'wputaxometas') ,
+            __('No', 'wputaxometas')
+        );
+        if (isset($field['datas'])) {
+            $field_datas = $field['datas'];
+        }
 
         // Set ID / Name
         $htmlname = 'term_meta[' . $id . ']';
@@ -155,6 +163,14 @@ class WPUTaxoMetas {
                     'textarea_name' => $htmlname,
                     'textarea_rows' => 5
                 ));
+            break;
+            case 'select':
+                echo '<select ' . $idname . '>';
+                echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
+                foreach ($field_datas as $key => $var) {
+                    echo '<option value="' . $key . '" ' . ((string)$key === (string)$value ? 'selected="selected"' : '') . '>' . $var . '</option>';
+                }
+                echo '</select>';
             break;
             case 'textarea':
                 echo '<textarea rows="5" cols="50" ' . $idname . '>' . esc_textarea($value) . '</textarea>';
