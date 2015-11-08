@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.7
+Version: 0.8
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -12,9 +12,11 @@ License URI: http://opensource.org/licenses/MIT
 */
 
 class WPUTaxoMetas {
-    function __construct() {
+    function __construct($hooks = true) {
         $this->set_options();
-        $this->set_admin_hooks();
+        if ($hooks) {
+            $this->set_admin_hooks();
+        }
     }
 
     function set_admin_hooks() {
@@ -75,11 +77,7 @@ class WPUTaxoMetas {
         }
 
         // Get previous values
-        $cat_meta = get_option("wpu_taxometas_term_" . $t_id);
-        if (!is_array($cat_meta)) {
-            $cat_meta = array();
-        }
-
+        $cat_meta = wputax_get_term_metas($t_id);
         $languages = $this->get_languages();
 
         foreach ($metas as $key => $var) {
@@ -91,28 +89,38 @@ class WPUTaxoMetas {
             // Check if field exists, and is in taxonomies
             if (isset($this->fields[$new_key]) && in_array($taxonomy, $this->fields[$new_key]['taxonomies'])) {
                 $cat_meta[$key] = $var;
+                if (function_exists('update_term_meta')) {
+                    update_term_meta($t_id, $key, $var);
+                }
             }
         }
 
         // Save the values in an option
-        return update_option("wpu_taxometas_term_" . $t_id, $cat_meta);
+        $update = true;
+        if (!function_exists('update_term_meta')) {
+            $update = update_option("wpu_taxometas_term_" . $t_id, $cat_meta);
+        }
+        return $update;
     }
 
     function extra_taxo_field($tag) {
         $t_id = $tag->term_id;
         $languages = $this->get_languages();
         wp_nonce_field('wpu-taxometas-term', 'wpu-taxometas-term-' . $t_id);
-        $term_meta = get_option("wpu_taxometas_term_" . $t_id);
+
         foreach ($this->fields as $id => $field) {
             if (in_array($tag->taxonomy, $field['taxonomies'])) {
                 if (!empty($languages) && isset($field['lang']) && $field['lang']) {
                     $field_label = $field['label'];
                     foreach ($languages as $id_lang => $language) {
+                        $tmp_id = $id_lang . '__' . $id;
+                        $term_meta[$tmp_id] = wputaxometas_get_term_meta($t_id, $tmp_id, 1);
                         $field['label'] = $field_label . ' [' . $id_lang . ']';
-                        $this->load_field_content($id_lang . '__' . $id, $field, $term_meta);
+                        $this->load_field_content($tmp_id, $field, $term_meta);
                     }
                 }
                 else {
+                    $term_meta[$id] = wputaxometas_get_term_meta($t_id, $id, 1);
                     $this->load_field_content($id, $field, $term_meta);
                 }
             }
@@ -255,9 +263,25 @@ function init_WPUTaxoMetas() {
 }
 
 function get_taxonomy_metas($t_id) {
+    return wputax_get_term_metas($t_id);
+}
+
+function wputax_get_term_metas($t_id) {
     $metas = get_option("wpu_taxometas_term_" . $t_id);
     if (!is_array($metas)) {
         $metas = array();
     }
     return $metas;
+}
+
+function wputaxometas_get_term_meta($t_id, $key, $single) {
+    $return = '';
+    if (function_exists('get_term_meta')) {
+        $return = get_term_meta($t_id, $key, $single);
+    }
+    if (!$return) {
+        $metas = wputax_get_term_metas($t_id);
+        $return = isset($metas[$key]) ? $metas[$key] : false;
+    }
+    return $return;
 }
