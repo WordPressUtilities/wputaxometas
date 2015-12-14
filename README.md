@@ -34,6 +34,7 @@ Fields parameters :
 * "taxonomies" : Array (optional) / Set the taxonomies for which the meta will be used. Default to array( 'category' )
 * "description" : String (optional) / Add a long description to the field administration to help the user in filling this field.
 * "type" : String (optional) / Set a kind of form field. Default to "text".
+* "column" : Bool (optional) / Display in taxo admin as a column.
 
 Fields types :
 ---

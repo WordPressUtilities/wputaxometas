@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.8.1
+Version: 0.9
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -45,6 +45,12 @@ class WPUTaxoMetas {
                 add_action('edited_' . $taxo, array(&$this,
                     'save_extra_taxo_field'
                 ));
+                add_filter('manage_edit-' . $taxo . '_columns', array(&$this,
+                    'column_title'
+                ));
+                add_filter('manage_' . $taxo . '_custom_column', array(&$this,
+                    'column_content'
+                ) , 10, 3);
             }
         }
     }
@@ -202,6 +208,38 @@ class WPUTaxoMetas {
         echo '</td></tr>';
     }
 
+    function column_title($columns) {
+        $screen = get_current_screen();
+        foreach ($this->fields as $id => $field) {
+            if (in_array($screen->taxonomy, $field['taxonomies']) && $field['column']) {
+                $columns[$id] = $field['label'];
+            }
+        }
+        return $columns;
+    }
+
+    function column_content($deprecated, $column_name, $term_id) {
+        $screen = get_current_screen();
+        foreach ($this->fields as $id => $field) {
+            if (in_array($screen->taxonomy, $field['taxonomies']) && $column_name == $id && $field['column']) {
+                $value = wputaxometas_get_term_meta($term_id, $column_name, 1);
+                switch ($field['type']) {
+                    case 'textarea':
+                        if (strlen($value) > 53) {
+                            $value = substr($value, 0, 50) . '...';
+                        }
+                        echo strip_tags($value);
+                        return;
+                    break;
+                    default:
+                        echo strip_tags($value);
+                        return;
+                }
+            }
+        }
+    }
+
+
     function set_options() {
 
         // Get Fields
@@ -222,6 +260,11 @@ class WPUTaxoMetas {
                 $this->fields[$id]['taxonomies'] = array(
                     'category'
                 );
+            }
+
+            // Set column visibility
+            if (!isset($field['column'])) {
+                $this->fields[$id]['column'] = false;
             }
 
             // Set default label
