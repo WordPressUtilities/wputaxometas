@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.9
+Version: 0.10
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -12,6 +12,10 @@ License URI: http://opensource.org/licenses/MIT
 */
 
 class WPUTaxoMetas {
+    public $qtranslate = false;
+    public $qtranslatex = false;
+    public $polylang = false;
+
     function __construct($hooks = true) {
         $this->set_options();
         if ($hooks) {
@@ -24,6 +28,9 @@ class WPUTaxoMetas {
         // Load assets
         add_action('admin_enqueue_scripts', array(&$this,
             'load_assets'
+        ));
+        add_action('qtranslate_add_admin_footer_js', array(&$this,
+            'load_assets_qtranslatex'
         ));
 
         $taxonomies = array();
@@ -53,6 +60,10 @@ class WPUTaxoMetas {
                 ) , 10, 3);
             }
         }
+    }
+
+    function load_assets_qtranslatex() {
+        wp_enqueue_script('wputaxometas_qtranslatex', plugins_url('/assets/qtranslatex.js', __FILE__) , array() , '', 1);
     }
 
     function load_assets() {
@@ -124,8 +135,11 @@ class WPUTaxoMetas {
                     foreach ($languages as $id_lang => $language) {
                         $tmp_id = $id_lang . '__' . $id;
                         $term_meta[$tmp_id] = wputaxometas_get_term_meta($t_id, $tmp_id, 1);
-                        $field['label'] = $field_label . ' [' . $id_lang . ']';
-                        $this->load_field_content($tmp_id, $field, $term_meta);
+                        $field['label'] = $field_label;
+                        if (!$this->qtranslatex) {
+                            $field['label'].= ' [' . $id_lang . ']';
+                        }
+                        $this->load_field_content($tmp_id, $field, $term_meta, $id_lang);
                     }
                 }
                 else {
@@ -136,7 +150,7 @@ class WPUTaxoMetas {
         }
     }
 
-    function load_field_content($id, $field, $term_meta) {
+    function load_field_content($id, $field, $term_meta, $id_lang = false) {
 
         // Set value
         $value = '';
@@ -156,7 +170,7 @@ class WPUTaxoMetas {
         $htmlid = 'term_meta_' . $id;
         $idname = 'name="' . $htmlname . '" id="' . $htmlid . '"';
 
-        echo '<tr class="form-field wpu-taxometas-form"><th scope="row" valign="top"><label for="' . $htmlid . '">' . $field['label'] . '</label></th>';
+        echo '<tr ' . ($id_lang != false ? 'data-wputaxometaslang="' . $id_lang . '"' : '') . ' class="form-field wpu-taxometas-form"><th scope="row" valign="top"><label for="' . $htmlid . '">' . $field['label'] . '</label></th>';
         echo '<td>';
         switch ($field['type']) {
             case 'attachment':
@@ -190,17 +204,17 @@ class WPUTaxoMetas {
                 echo '</select>';
             break;
             case 'textarea':
-                echo '<textarea rows="5" cols="50" ' . $idname . '>' . esc_textarea($value) . '</textarea>';
+                echo '<textarea ' . ($id_lang != false ? 'class="large-text qtranxs-translatable"' : '') . ' rows="5" cols="50" ' . $idname . '>' . esc_textarea($value) . '</textarea>';
             break;
             case 'color':
             case 'date':
             case 'email':
             case 'number':
             case 'url':
-                echo '<input type="' . $field['type'] . '" ' . $idname . ' value="' . esc_attr($value) . '">';
+                echo '<input ' . ($id_lang != false ? 'class="qtranxs-translatable"' : '') . ' type="' . $field['type'] . '" ' . $idname . ' value="' . esc_attr($value) . '">';
             break;
             default:
-                echo '<input type="text" ' . $idname . ' value="' . esc_attr($value) . '">';
+                echo '<input ' . ($id_lang != false ? 'class="qtranxs-translatable"' : '') . ' type="text" ' . $idname . ' value="' . esc_attr($value) . '">';
         }
         if (isset($field['description'])) {
             echo '<br /><span class="description">' . esc_html($field['description']) . '</span>';
@@ -238,7 +252,6 @@ class WPUTaxoMetas {
             }
         }
     }
-
 
     function set_options() {
 
@@ -285,6 +298,10 @@ class WPUTaxoMetas {
 
         // Obtaining from Qtranslate
         if (isset($q_config['enabled_languages'])) {
+            $this->qtranslate = true;
+            if (defined('QTX_VERSION')) {
+                $this->qtranslatex = true;
+            }
             foreach ($q_config['enabled_languages'] as $lang) {
                 if (!in_array($lang, $languages) && isset($q_config['language_name'][$lang])) {
                     $languages[$lang] = $q_config['language_name'][$lang];
@@ -294,6 +311,7 @@ class WPUTaxoMetas {
 
         // Obtaining from Polylang
         if (function_exists('pll_the_languages') && is_object($polylang)) {
+            $this->polylang = true;
             $poly_langs = $polylang->model->get_languages_list();
             foreach ($poly_langs as $lang) {
                 $languages[$lang->slug] = $lang->name;
