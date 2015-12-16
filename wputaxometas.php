@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.10
+Version: 0.11
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -233,23 +233,39 @@ class WPUTaxoMetas {
     }
 
     function column_content($deprecated, $column_name, $term_id) {
+        $languages = $this->get_languages();
         $screen = get_current_screen();
         foreach ($this->fields as $id => $field) {
             if (in_array($screen->taxonomy, $field['taxonomies']) && $column_name == $id && $field['column']) {
-                $value = wputaxometas_get_term_meta($term_id, $column_name, 1);
-                switch ($field['type']) {
-                    case 'textarea':
-                        if (strlen($value) > 53) {
-                            $value = substr($value, 0, 50) . '...';
-                        }
-                        echo strip_tags($value);
-                        return;
-                    break;
-                    default:
-                        echo strip_tags($value);
-                        return;
+                if ($field['lang']) {
+                    foreach ($languages as $id_lang => $lang) {
+                        echo '<strong>'.$id_lang.'</strong> : ' .  $this->display_meta_content($field, $term_id, $id_lang . '__' . $column_name).'<br />';
+                    }
                 }
+                else {
+                    echo $this->display_meta_content($field, $term_id, $column_name);
+                }
+                return;
             }
+        }
+    }
+
+    function display_meta_content($field, $term_id, $column_name) {
+        $value = wputaxometas_get_term_meta($term_id, $column_name, 1);
+        switch ($field['type']) {
+            case 'textarea':
+                if (strlen($value) > 53) {
+                    $value = substr($value, 0, 50) . '...';
+                }
+                return strip_tags($value);
+            break;
+            case 'color':
+                if(preg_match('/^\#([A-Za-z0-9]+)$/', $value)){
+                    return '<span style="display:inline-block;vertical-align:-2px;width:1em;height:1em;border-radius:50%;background-color:'.$value.';"></span>';
+                }
+            break;
+            default:
+                return strip_tags($value);
         }
     }
 

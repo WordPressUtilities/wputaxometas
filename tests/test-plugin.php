@@ -42,7 +42,7 @@ class WPUTaxoMetas_Plugin extends WP_UnitTestCase
             return $fields;
         }
 
-        $demo_plugin = new WPUTaxoMetas;
+        $demo_plugin = new WPUTaxoMetas();
 
         // Simulate WordPress init
         do_action('init');
