@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.11
+Version: 0.11.1
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -70,9 +70,11 @@ class WPUTaxoMetas {
         $screen = get_current_screen();
         if ($screen->base == 'edit-tags') {
             wp_enqueue_media();
+            wp_enqueue_style('wp-color-picker');
+            wp_enqueue_script('wp-color-picker');
             wp_enqueue_script('wputaxometas_scripts', plugins_url('/assets/global.js', __FILE__));
-            wp_enqueue_style('wputaxometas_style', plugins_url('assets/style.css', __FILE__));
         }
+        wp_enqueue_style('wputaxometas_style', plugins_url('assets/style.css', __FILE__));
     }
 
     function save_extra_taxo_field($t_id) {
@@ -157,13 +159,6 @@ class WPUTaxoMetas {
         if (isset($term_meta[$id])) {
             $value = stripslashes($term_meta[$id]);
         }
-        $field_datas = array(
-            __('Yes', 'wputaxometas') ,
-            __('No', 'wputaxometas')
-        );
-        if (isset($field['datas'])) {
-            $field_datas = $field['datas'];
-        }
 
         // Set ID / Name
         $htmlname = 'term_meta[' . $id . ']';
@@ -198,7 +193,7 @@ class WPUTaxoMetas {
             case 'select':
                 echo '<select ' . $idname . '>';
                 echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
-                foreach ($field_datas as $key => $var) {
+                foreach ($field['datas'] as $key => $var) {
                     echo '<option value="' . $key . '" ' . ((string)$key === (string)$value ? 'selected="selected"' : '') . '>' . $var . '</option>';
                 }
                 echo '</select>';
@@ -238,9 +233,14 @@ class WPUTaxoMetas {
         foreach ($this->fields as $id => $field) {
             if (in_array($screen->taxonomy, $field['taxonomies']) && $column_name == $id && $field['column']) {
                 if ($field['lang']) {
+                    $tmp_values = array();
                     foreach ($languages as $id_lang => $lang) {
-                        echo '<strong>'.$id_lang.'</strong> : ' .  $this->display_meta_content($field, $term_id, $id_lang . '__' . $column_name).'<br />';
+                        $tmp_value = $this->display_meta_content($field, $term_id, $id_lang . '__' . $column_name);
+                        if (!empty($tmp_value)) {
+                            $tmp_values[] = '<strong>' . $id_lang . '</strong> : ' . $tmp_value;
+                        }
                     }
+                    echo implode('<hr class="wputaxometas-hr" />', $tmp_values);
                 }
                 else {
                     echo $this->display_meta_content($field, $term_id, $column_name);
@@ -251,21 +251,37 @@ class WPUTaxoMetas {
     }
 
     function display_meta_content($field, $term_id, $column_name) {
+        $max_chars = 50;
+
         $value = wputaxometas_get_term_meta($term_id, $column_name, 1);
+        if (empty($value)) {
+            return $value;
+        }
         switch ($field['type']) {
-            case 'textarea':
-                if (strlen($value) > 53) {
-                    $value = substr($value, 0, 50) . '...';
+            case 'select':
+                if (isset($field['datas'][$value])) {
+                    return $field['datas'][$value];
                 }
-                return strip_tags($value);
+            break;
+            case 'attachment':
+                if (is_numeric($value)) {
+                    $image = wp_get_attachment_image_src($value, 'thumbnail');
+                    if (isset($image[0])) {
+                        return '<img class="wputaxometas-col-img" src="' . $image[0] . '" alt="" />';
+                    }
+                }
             break;
             case 'color':
-                if(preg_match('/^\#([A-Za-z0-9]+)$/', $value)){
-                    return '<span style="display:inline-block;vertical-align:-2px;width:1em;height:1em;border-radius:50%;background-color:'.$value.';"></span>';
+                if (preg_match('/^\#([A-Za-z0-9]+)$/', $value)) {
+                    return '<span class="wputaxometas-col-color" style="background-color:' . $value . '"></span>';
                 }
             break;
             default:
-                return strip_tags($value);
+                $value = strip_tags($value);
+                if (strlen($value) > $max_chars + 3) {
+                    $value = substr($value, 0, $max_chars) . '...';
+                }
+                return $value;
         }
     }
 
@@ -304,6 +320,14 @@ class WPUTaxoMetas {
             // Set default type
             if (!isset($field['type'])) {
                 $this->fields[$id]['type'] = 'text';
+            }
+
+            // Default datas
+            if (!isset($field['datas'])) {
+                $this->fields[$id]['datas'] = array(
+                    __('Yes', 'wputaxometas') ,
+                    __('No', 'wputaxometas')
+                );
             }
         }
     }

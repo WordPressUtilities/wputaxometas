@@ -1,6 +1,18 @@
-jQuery(document).ready(function($) {
+/*global jQuery:false, wp:false */
+'use strict';
+
+jQuery(document).ready(function() {
     wputh_taxometas_set_media();
+    wputh_taxometas_set_colorpicker();
 });
+
+/* ----------------------------------------------------------
+  Color Picker
+---------------------------------------------------------- */
+
+var wputh_taxometas_set_colorpicker = function() {
+    jQuery('.wpu-taxometas-form [type=color]').attr('type', 'text').wpColorPicker();
+};
 
 /* ----------------------------------------------------------
   Upload files
@@ -30,7 +42,6 @@ var wputh_taxometas_set_media = function() {
 
         // Reset attachment value
         jQuery('#' + wputaxometas_datafor).attr('value', '');
-
 
     });
 
