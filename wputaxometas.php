@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.11.1
+Version: 0.11.2
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -194,7 +194,7 @@ class WPUTaxoMetas {
                 echo '<select ' . $idname . '>';
                 echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
                 foreach ($field['datas'] as $key => $var) {
-                    echo '<option value="' . $key . '" ' . ((string)$key === (string)$value ? 'selected="selected"' : '') . '>' . $var . '</option>';
+                    echo '<option value="' . $key . '" ' . ($key == $value ? 'selected="selected"' : '') . '>' . $var . '</option>';
                 }
                 echo '</select>';
             break;
@@ -325,8 +325,8 @@ class WPUTaxoMetas {
             // Default datas
             if (!isset($field['datas'])) {
                 $this->fields[$id]['datas'] = array(
-                    __('Yes', 'wputaxometas') ,
-                    __('No', 'wputaxometas')
+                    __('No', 'wputaxometas'),
+                    __('Yes', 'wputaxometas')
                 );
             }
         }
