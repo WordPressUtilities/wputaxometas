@@ -4,7 +4,25 @@
 jQuery(document).ready(function() {
     wputh_taxometas_set_media();
     wputh_taxometas_set_colorpicker();
+    wputh_taxometas_set_checkbox();
 });
+
+/* ----------------------------------------------------------
+  Checkbox
+---------------------------------------------------------- */
+
+var wputh_taxometas_set_checkbox = function() {
+    jQuery('.wpu-taxometas-input-checkbox').each(function() {
+        var $this = jQuery(this),
+            $hidden = $this.parent().find('[type=hidden]');
+
+        function set_checked() {
+            $hidden.val($this.is(':checked') ? '1' : '0');
+        }
+        set_checked();
+        $this.on('change', set_checked);
+    });
+};
 
 /* ----------------------------------------------------------
   Color Picker

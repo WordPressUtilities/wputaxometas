@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.11.2
+Version: 0.12
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -105,11 +105,11 @@ class WPUTaxoMetas {
                 $new_key = str_replace($id_lang . '__', '', $new_key);
             }
 
-            // Check if field exists, and is in taxonomies
+            // Check if field exists, and is in taxonomy
             if (isset($this->fields[$new_key]) && in_array($taxonomy, $this->fields[$new_key]['taxonomies'])) {
-                $cat_meta[$key] = $var;
+                $cat_meta[$key] = $this->validate_field($this->fields[$new_key], $var);
                 if (function_exists('update_term_meta')) {
-                    update_term_meta($t_id, $key, $var);
+                    update_term_meta($t_id, $key, $cat_meta[$key]);
                 }
             }
         }
@@ -123,6 +123,18 @@ class WPUTaxoMetas {
             delete_option("wpu_taxometas_term_" . $t_id);
         }
         return $update;
+    }
+
+    function validate_field($field, $value) {
+        $zeroone = array(
+            '0',
+            '1'
+        );
+        if ($field['type'] == 'checkbox' && !in_array($value, $zeroone)) {
+            return '0';
+        }
+
+        return $value;
     }
 
     function extra_taxo_field($tag) {
@@ -198,6 +210,14 @@ class WPUTaxoMetas {
                 }
                 echo '</select>';
             break;
+            case 'radio':
+                foreach ($field['datas'] as $key => $var) {
+                    echo '<label class="wpu-taxometas-input-radio"><input type="radio" name="' . $htmlname . '" value="' . $key . '" ' . ($key == $value ? 'checked="checked"' : '') . ' /> ' . $var . '</label>';
+                }
+            break;
+            case 'checkbox':
+                echo '<label><input type="hidden" ' . $idname . ' value="' . esc_attr($value) . '" /><input class="wpu-taxometas-input-checkbox" type="checkbox" ' . checked($value, '1', false) . ' value="1"> ' . $field['long_label'] . '</label>';
+            break;
             case 'textarea':
                 echo '<textarea ' . ($id_lang != false ? 'class="large-text qtranxs-translatable"' : '') . ' rows="5" cols="50" ' . $idname . '>' . esc_textarea($value) . '</textarea>';
             break;
@@ -259,6 +279,8 @@ class WPUTaxoMetas {
         }
         switch ($field['type']) {
             case 'select':
+            case 'checkbox':
+            case 'radio':
                 if (isset($field['datas'][$value])) {
                     return $field['datas'][$value];
                 }
@@ -317,15 +339,19 @@ class WPUTaxoMetas {
                 $this->fields[$id]['label'] = ucwords($id);
             }
 
+            if (!isset($field['long_label'])) {
+                $this->fields[$id]['long_label'] = $this->fields[$id]['label'];
+            }
+
             // Set default type
             if (!isset($field['type'])) {
                 $this->fields[$id]['type'] = 'text';
             }
 
             // Default datas
-            if (!isset($field['datas'])) {
+            if (!isset($field['datas']) || $field['type'] == 'checkbox') {
                 $this->fields[$id]['datas'] = array(
-                    __('No', 'wputaxometas'),
+                    __('No', 'wputaxometas') ,
                     __('Yes', 'wputaxometas')
                 );
             }
