@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.12
+Version: 0.12.1
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -130,8 +130,33 @@ class WPUTaxoMetas {
             '0',
             '1'
         );
-        if ($field['type'] == 'checkbox' && !in_array($value, $zeroone)) {
-            return '0';
+
+        reset($field['datas']);
+        $first_key = key($field['datas']);
+
+        switch ($field['type']) {
+            case 'attachment':
+                return !is_numeric($value) ? false : $value;
+            break;
+            case 'number':
+                return !is_numeric($value) ? 0 : $value;
+            break;
+            case 'email':
+                return !filter_var($value, FILTER_VALIDATE_EMAIL) ? '' : $value;
+            break;
+            case 'url':
+                return !filter_var($value, FILTER_VALIDATE_URL) ? '' : $value;
+            break;
+            case 'checkbox':
+                return !in_array($value, $zeroone) ? '0' : $value;
+            break;
+            case 'radio':
+            case 'select':
+                return !array_key_exists($value, $field['datas']) ? $first_key : $value;
+            break;
+            case 'color':
+                return !preg_match('/^#[A-Fa-f0-9]{6}$/i', $value) ? '#000000' : $value;
+            break;
         }
 
         return $value;
@@ -274,37 +299,35 @@ class WPUTaxoMetas {
         $max_chars = 50;
 
         $value = wputaxometas_get_term_meta($term_id, $column_name, 1);
-        if (empty($value)) {
+        $valid_value = $this->validate_field($field, $value);
+        if ($value != '0' && empty($value)) {
             return $value;
         }
-        switch ($field['type']) {
-            case 'select':
-            case 'checkbox':
-            case 'radio':
-                if (isset($field['datas'][$value])) {
+        // If validate value is correct
+        if ($valid_value == $value) {
+            switch ($field['type']) {
+                case 'select':
+                case 'checkbox':
+                case 'radio':
                     return $field['datas'][$value];
-                }
-            break;
-            case 'attachment':
-                if (is_numeric($value)) {
+                break;
+                case 'attachment':
                     $image = wp_get_attachment_image_src($value, 'thumbnail');
                     if (isset($image[0])) {
                         return '<img class="wputaxometas-col-img" src="' . $image[0] . '" alt="" />';
                     }
-                }
-            break;
-            case 'color':
-                if (preg_match('/^\#([A-Za-z0-9]+)$/', $value)) {
+                break;
+                case 'color':
                     return '<span class="wputaxometas-col-color" style="background-color:' . $value . '"></span>';
-                }
-            break;
-            default:
-                $value = strip_tags($value);
-                if (strlen($value) > $max_chars + 3) {
-                    $value = substr($value, 0, $max_chars) . '...';
-                }
-                return $value;
+                break;
+            }
         }
+
+        $value = strip_tags($value);
+        if (strlen($value) > $max_chars + 3) {
+            $value = substr($value, 0, $max_chars) . '...';
+        }
+        return $value;
     }
 
     function set_options() {
