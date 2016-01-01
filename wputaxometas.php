@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.12.1
+Version: 0.12.2
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -14,6 +14,7 @@ License URI: http://opensource.org/licenses/MIT
 class WPUTaxoMetas {
     public $qtranslate = false;
     public $qtranslatex = false;
+    public $fields = array();
     public $polylang = false;
 
     function __construct($hooks = true) {
@@ -303,6 +304,7 @@ class WPUTaxoMetas {
         if ($value != '0' && empty($value)) {
             return $value;
         }
+
         // If validate value is correct
         if ($valid_value == $value) {
             switch ($field['type']) {
@@ -410,8 +412,10 @@ class WPUTaxoMetas {
     }
 }
 
+$WPUTaxoMetas = false;
 add_action('init', 'init_WPUTaxoMetas');
 function init_WPUTaxoMetas() {
+    global $WPUTaxoMetas;
     $WPUTaxoMetas = new WPUTaxoMetas();
 }
 
@@ -423,6 +427,27 @@ function wputax_get_term_metas($t_id) {
     $metas = get_option("wpu_taxometas_term_" . $t_id);
     if (!is_array($metas)) {
         $metas = array();
+    }
+    if (empty($metas) && function_exists('get_term_meta')) {
+        $metas = wputax_get_term_metas_built($t_id);
+    }
+    return $metas;
+}
+
+function wputax_get_term_metas_built($t_id) {
+    $metas = array();
+    $term = get_term($t_id);
+    if (!is_object($term)) {
+        return;
+    }
+    global $WPUTaxoMetas;
+    if (!is_object($WPUTaxoMetas)) {
+        $WPUTaxoMetas = new WPUTaxoMetas();
+    }
+    foreach ($WPUTaxoMetas->fields as $key => $field) {
+        if (in_array($term->taxonomy, $field['taxonomies'])) {
+            $metas[$key] = get_term_meta($t_id, $key, 1);
+        }
     }
     return $metas;
 }
