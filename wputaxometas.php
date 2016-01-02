@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.12.2
+Version: 0.12.3
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -383,7 +383,7 @@ class WPUTaxoMetas {
         }
     }
 
-    private function get_languages() {
+    function get_languages() {
         global $q_config, $polylang;
         $languages = array();
 
