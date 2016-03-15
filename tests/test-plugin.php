@@ -84,6 +84,11 @@ class WPUTaxoMetas_Plugin extends WP_UnitTestCase {
         $this->assertEquals(1, $demo_plugin->validate_field($field_default, 1));
         $this->assertEquals(0, $demo_plugin->validate_field($field_default, 'az'));
 
+        // Attachment
+        $field_default['type'] = 'post';
+        $this->assertEquals(1, $demo_plugin->validate_field($field_default, 1));
+        $this->assertEquals(0, $demo_plugin->validate_field($field_default, 'az'));
+
         // Number
         $field_default['type'] = 'number';
         $this->assertEquals(1, $demo_plugin->validate_field($field_default, 1));

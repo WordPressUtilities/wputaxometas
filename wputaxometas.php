@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.12.3
+Version: 0.13
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -139,6 +139,9 @@ class WPUTaxoMetas {
             case 'attachment':
                 return !is_numeric($value) ? false : $value;
             break;
+            case 'post':
+                return !is_numeric($value) ? false : $value;
+            break;
             case 'number':
                 return !is_numeric($value) ? 0 : $value;
             break;
@@ -236,6 +239,23 @@ class WPUTaxoMetas {
                 }
                 echo '</select>';
             break;
+            case 'post':
+                $lastposts = get_posts(array(
+                    'posts_per_page' => 100,
+                    'order'=> 'ASC',
+                    'orderby' => 'title',
+                    'post_type' => (isset($field['post_type']) ? $field['post_type'] : 'post')
+                ));
+                if (!empty($lastposts)) {
+                    echo '<select ' . $idname . '>';
+                    echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
+                    foreach ($lastposts as $post) {
+                        echo '<option value="' . $post->ID . '" ' . ($post->ID == $value ? 'selected="selected"' : '') . '>' . $post->post_title . '</option>';
+                    }
+                    echo '</select>';
+                }
+
+                break;
             case 'radio':
                 foreach ($field['datas'] as $key => $var) {
                     echo '<label class="wpu-taxometas-input-radio"><input type="radio" name="' . $htmlname . '" value="' . $key . '" ' . ($key == $value ? 'checked="checked"' : '') . ' /> ' . $var . '</label>';
