@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.13.1
+Version: 0.14
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -19,14 +19,14 @@ class WPUTaxoMetas {
     public $fields = array();
     public $polylang = false;
 
-    function __construct($hooks = true) {
+    public function __construct($hooks = true) {
         $this->set_options();
         if ($hooks) {
             $this->set_admin_hooks();
         }
     }
 
-    function set_admin_hooks() {
+    public function set_admin_hooks() {
 
         // Load assets
         add_action('admin_enqueue_scripts', array(&$this,
@@ -36,40 +36,61 @@ class WPUTaxoMetas {
             'load_assets_qtranslatex'
         ));
 
-        $taxonomies = array();
+        $this->taxonomies = array();
 
         // Extract taxonomies
         foreach ($this->fields as $id => $field) {
             foreach ($field['taxonomies'] as $taxo) {
-                $taxonomies[$taxo] = $taxo;
+                $this->taxonomies[$taxo] = $taxo;
             }
         }
 
         // Add hook to edit category
-        foreach ($taxonomies as $taxo) {
+        foreach ($this->taxonomies as $taxo) {
             $taxonomy = get_taxonomy($taxo);
+
+            add_filter('manage_edit-' . $taxo . '_columns', array(&$this,
+                'column_title'
+            ));
+            add_filter('manage_edit-' . $taxo . '_sortable_columns', array(&$this,
+                'column_title'
+            ), 10, 3);
+            add_filter('manage_' . $taxo . '_custom_column', array(&$this,
+                'column_content'
+            ), 10, 3);
+
             if (current_user_can($taxonomy->cap->edit_terms)) {
                 add_action($taxo . '_edit_form_fields', array(&$this,
                     'extra_taxo_field'
                 ));
+                add_action('created_term', array(&$this,
+                    'default_values'
+                ), 10, 3);
                 add_action('edited_' . $taxo, array(&$this,
                     'save_extra_taxo_field'
                 ));
-                add_filter('manage_edit-' . $taxo . '_columns', array(&$this,
-                    'column_title'
-                ));
-                add_filter('manage_' . $taxo . '_custom_column', array(&$this,
-                    'column_content'
-                ) , 10, 3);
             }
         }
     }
 
-    function load_assets_qtranslatex() {
-        wp_enqueue_script('wputaxometas_qtranslatex', plugins_url('/assets/qtranslatex.js', __FILE__) , array() , '', 1);
+    public function default_values($term_id, $tt_id, $taxonomy) {
+        foreach ($this->fields as $id => $field) {
+            if (!isset($field['default'])) {
+                continue;
+            }
+            foreach ($field['taxonomies'] as $taxo) {
+                if ($taxo == $taxonomy) {
+                    add_term_meta($term_id, $id, $field['default']);
+                }
+            }
+        }
     }
 
-    function load_assets() {
+    public function load_assets_qtranslatex() {
+        wp_enqueue_script('wputaxometas_qtranslatex', plugins_url('/assets/qtranslatex.js', __FILE__), array(), '', 1);
+    }
+
+    public function load_assets() {
         $screen = get_current_screen();
         if ($screen->base == 'edit-tags') {
             wp_enqueue_media();
@@ -80,13 +101,13 @@ class WPUTaxoMetas {
         wp_enqueue_style('wputaxometas_style', plugins_url('assets/style.css', __FILE__));
     }
 
-    function save_extra_taxo_field($t_id) {
+    public function save_extra_taxo_field($t_id) {
         if (isset($_POST['term_meta']) && isset($_POST['taxonomy']) && wp_verify_nonce($_POST['wpu-taxometas-term-' . $t_id], 'wpu-taxometas-term')) {
             $this->update_metas_for_term($t_id, $_POST['taxonomy'], $_POST['term_meta']);
         }
     }
 
-    function update_metas_for_term($t_id, $taxonomy, $metas) {
+    public function update_metas_for_term($t_id, $taxonomy, $metas) {
 
         // No values sent
         if (empty($metas)) {
@@ -121,14 +142,13 @@ class WPUTaxoMetas {
         $update = true;
         if (!function_exists('update_term_meta')) {
             $update = update_option("wpu_taxometas_term_" . $t_id, $cat_meta);
-        }
-        else {
+        } else {
             delete_option("wpu_taxometas_term_" . $t_id);
         }
         return $update;
     }
 
-    function validate_field($field, $value) {
+    public function validate_field($field, $value) {
         $zeroone = array(
             '0',
             '1'
@@ -138,37 +158,37 @@ class WPUTaxoMetas {
         $first_key = key($field['datas']);
 
         switch ($field['type']) {
-            case 'attachment':
-                return !is_numeric($value) ? false : $value;
+        case 'attachment':
+            return !is_numeric($value) ? false : $value;
             break;
-            case 'post':
-                return !is_numeric($value) ? false : $value;
+        case 'post':
+            return !is_numeric($value) ? false : $value;
             break;
-            case 'number':
-                return !is_numeric($value) ? 0 : $value;
+        case 'number':
+            return !is_numeric($value) ? 0 : $value;
             break;
-            case 'email':
-                return !filter_var($value, FILTER_VALIDATE_EMAIL) ? '' : $value;
+        case 'email':
+            return !filter_var($value, FILTER_VALIDATE_EMAIL) ? '' : $value;
             break;
-            case 'url':
-                return !filter_var($value, FILTER_VALIDATE_URL) ? '' : $value;
+        case 'url':
+            return !filter_var($value, FILTER_VALIDATE_URL) ? '' : $value;
             break;
-            case 'checkbox':
-                return !in_array($value, $zeroone) ? '0' : $value;
+        case 'checkbox':
+            return !in_array($value, $zeroone) ? '0' : $value;
             break;
-            case 'radio':
-            case 'select':
-                return !array_key_exists($value, $field['datas']) ? $first_key : $value;
+        case 'radio':
+        case 'select':
+            return !array_key_exists($value, $field['datas']) ? $first_key : $value;
             break;
-            case 'color':
-                return !preg_match('/^#[A-Fa-f0-9]{6}$/i', $value) ? '#000000' : $value;
+        case 'color':
+            return !preg_match('/^#[A-Fa-f0-9]{6}$/i', $value) ? '#000000' : $value;
             break;
         }
 
         return $value;
     }
 
-    function extra_taxo_field($tag) {
+    public function extra_taxo_field($tag) {
         $t_id = $tag->term_id;
         $languages = $this->get_languages();
         wp_nonce_field('wpu-taxometas-term', 'wpu-taxometas-term-' . $t_id);
@@ -182,12 +202,11 @@ class WPUTaxoMetas {
                         $term_meta[$tmp_id] = wputaxometas_get_term_meta($t_id, $tmp_id, 1);
                         $field['label'] = $field_label;
                         if (!$this->qtranslatex) {
-                            $field['label'].= ' [' . $id_lang . ']';
+                            $field['label'] .= ' [' . $id_lang . ']';
                         }
                         $this->load_field_content($tmp_id, $field, $term_meta, $id_lang);
                     }
-                }
-                else {
+                } else {
                     $term_meta[$id] = wputaxometas_get_term_meta($t_id, $id, 1);
                     $this->load_field_content($id, $field, $term_meta);
                 }
@@ -195,7 +214,7 @@ class WPUTaxoMetas {
         }
     }
 
-    function load_field_content($id, $field, $term_meta, $id_lang = false) {
+    public function load_field_content($id, $field, $term_meta, $id_lang = false) {
 
         // Set value
         $value = '';
@@ -211,73 +230,73 @@ class WPUTaxoMetas {
         echo '<tr ' . ($id_lang != false ? 'data-wputaxometaslang="' . $id_lang . '"' : '') . ' class="form-field wpu-taxometas-form"><th scope="row" valign="top"><label for="' . $htmlid . '">' . $field['label'] . '</label></th>';
         echo '<td>';
         switch ($field['type']) {
-            case 'attachment':
-                $img = '';
-                $btn_label = __('Add a picture', 'wputaxometas');
-                $btn_base_label = $btn_label;
-                $btn_edit_label = __('Change this picture', 'wputaxometas');
-                if (is_numeric($value)) {
-                    $image = wp_get_attachment_image_src($value, 'big');
-                    if (isset($image[0])) {
-                        $img = '<img class="wpu-taxometas-upload-preview" src="' . $image[0] . '" alt="" /><span data-for="' . $htmlid . '" class="x">&times;</span>';
-                        $btn_label = $btn_edit_label;
-                    }
+        case 'attachment':
+            $img = '';
+            $btn_label = __('Add a picture', 'wputaxometas');
+            $btn_base_label = $btn_label;
+            $btn_edit_label = __('Change this picture', 'wputaxometas');
+            if (is_numeric($value)) {
+                $image = wp_get_attachment_image_src($value, 'big');
+                if (isset($image[0])) {
+                    $img = '<img class="wpu-taxometas-upload-preview" src="' . $image[0] . '" alt="" /><span data-for="' . $htmlid . '" class="x">&times;</span>';
+                    $btn_label = $btn_edit_label;
                 }
-                echo '<div data-baselabel="' . esc_attr($btn_base_label) . '" data-label="' . esc_attr($btn_edit_label) . '" class="wpu-taxometas-upload-wrap" id="preview-' . $htmlid . '">' . $img . '</div>';
-                echo '<a href="#" data-for="' . $htmlid . '" class="button button-small wputaxometas_add_media">' . $btn_label . '</a>';
-                echo '<input type="hidden" ' . $idname . ' value="' . $value . '" />';
+            }
+            echo '<div data-baselabel="' . esc_attr($btn_base_label) . '" data-label="' . esc_attr($btn_edit_label) . '" class="wpu-taxometas-upload-wrap" id="preview-' . $htmlid . '">' . $img . '</div>';
+            echo '<a href="#" data-for="' . $htmlid . '" class="button button-small wputaxometas_add_media">' . $btn_label . '</a>';
+            echo '<input type="hidden" ' . $idname . ' value="' . $value . '" />';
             break;
-            case 'editor':
-                wp_editor($value, $htmlid, array(
-                    'textarea_name' => $htmlname,
-                    'textarea_rows' => 5
-                ));
+        case 'editor':
+            wp_editor($value, $htmlid, array(
+                'textarea_name' => $htmlname,
+                'textarea_rows' => 5
+            ));
             break;
-            case 'select':
+        case 'select':
+            echo '<select ' . $idname . '>';
+            echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
+            foreach ($field['datas'] as $key => $var) {
+                echo '<option value="' . $key . '" ' . ($key == $value ? 'selected="selected"' : '') . '>' . $var . '</option>';
+            }
+            echo '</select>';
+            break;
+        case 'post':
+            $lastposts = get_posts(array(
+                'posts_per_page' => 100,
+                'order' => 'ASC',
+                'orderby' => 'title',
+                'post_type' => (isset($field['post_type']) ? $field['post_type'] : 'post')
+            ));
+            if (!empty($lastposts)) {
                 echo '<select ' . $idname . '>';
                 echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
-                foreach ($field['datas'] as $key => $var) {
-                    echo '<option value="' . $key . '" ' . ($key == $value ? 'selected="selected"' : '') . '>' . $var . '</option>';
+                foreach ($lastposts as $post) {
+                    echo '<option value="' . $post->ID . '" ' . ($post->ID == $value ? 'selected="selected"' : '') . '>' . $post->post_title . '</option>';
                 }
                 echo '</select>';
-            break;
-            case 'post':
-                $lastposts = get_posts(array(
-                    'posts_per_page' => 100,
-                    'order'=> 'ASC',
-                    'orderby' => 'title',
-                    'post_type' => (isset($field['post_type']) ? $field['post_type'] : 'post')
-                ));
-                if (!empty($lastposts)) {
-                    echo '<select ' . $idname . '>';
-                    echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
-                    foreach ($lastposts as $post) {
-                        echo '<option value="' . $post->ID . '" ' . ($post->ID == $value ? 'selected="selected"' : '') . '>' . $post->post_title . '</option>';
-                    }
-                    echo '</select>';
-                }
+            }
 
-                break;
-            case 'radio':
-                foreach ($field['datas'] as $key => $var) {
-                    echo '<label class="wpu-taxometas-input-radio"><input type="radio" name="' . $htmlname . '" value="' . $key . '" ' . ($key == $value ? 'checked="checked"' : '') . ' /> ' . $var . '</label>';
-                }
             break;
-            case 'checkbox':
-                echo '<label><input type="hidden" ' . $idname . ' value="' . esc_attr($value) . '" /><input class="wpu-taxometas-input-checkbox" type="checkbox" ' . checked($value, '1', false) . ' value="1"> ' . $field['long_label'] . '</label>';
+        case 'radio':
+            foreach ($field['datas'] as $key => $var) {
+                echo '<label class="wpu-taxometas-input-radio"><input type="radio" name="' . $htmlname . '" value="' . $key . '" ' . ($key == $value ? 'checked="checked"' : '') . ' /> ' . $var . '</label>';
+            }
             break;
-            case 'textarea':
-                echo '<textarea ' . ($id_lang != false ? 'class="large-text qtranxs-translatable"' : '') . ' rows="5" cols="50" ' . $idname . '>' . esc_textarea($value) . '</textarea>';
+        case 'checkbox':
+            echo '<label><input type="hidden" ' . $idname . ' value="' . esc_attr($value) . '" /><input class="wpu-taxometas-input-checkbox" type="checkbox" ' . checked($value, '1', false) . ' value="1"> ' . $field['long_label'] . '</label>';
             break;
-            case 'color':
-            case 'date':
-            case 'email':
-            case 'number':
-            case 'url':
-                echo '<input ' . ($id_lang != false ? 'class="qtranxs-translatable"' : '') . ' type="' . $field['type'] . '" ' . $idname . ' value="' . esc_attr($value) . '">';
+        case 'textarea':
+            echo '<textarea ' . ($id_lang != false ? 'class="large-text qtranxs-translatable"' : '') . ' rows="5" cols="50" ' . $idname . '>' . esc_textarea($value) . '</textarea>';
             break;
-            default:
-                echo '<input ' . ($id_lang != false ? 'class="qtranxs-translatable"' : '') . ' type="text" ' . $idname . ' value="' . esc_attr($value) . '">';
+        case 'color':
+        case 'date':
+        case 'email':
+        case 'number':
+        case 'url':
+            echo '<input ' . ($id_lang != false ? 'class="qtranxs-translatable"' : '') . ' type="' . $field['type'] . '" ' . $idname . ' value="' . esc_attr($value) . '">';
+            break;
+        default:
+            echo '<input ' . ($id_lang != false ? 'class="qtranxs-translatable"' : '') . ' type="text" ' . $idname . ' value="' . esc_attr($value) . '">';
         }
         if (isset($field['description'])) {
             echo '<br /><span class="description">' . esc_html($field['description']) . '</span>';
@@ -285,40 +304,45 @@ class WPUTaxoMetas {
         echo '</td></tr>';
     }
 
-    function column_title($columns) {
+    public function column_title($columns) {
         $screen = get_current_screen();
+        if (!is_object($screen) || !property_exists($screen, 'taxonomy')) {
+            return $columns;
+        }
+
         foreach ($this->fields as $id => $field) {
-            if (in_array($screen->taxonomy, $field['taxonomies']) && $field['column']) {
+            if (isset($field['taxonomies'], $field['column']) && in_array($screen->taxonomy, $field['taxonomies']) && $field['column']) {
                 $columns[$id] = $field['label'];
             }
         }
         return $columns;
     }
 
-    function column_content($deprecated, $column_name, $term_id) {
+    public function column_content($deprecated, $column_name, $term_id) {
         $languages = $this->get_languages();
         $screen = get_current_screen();
+
         foreach ($this->fields as $id => $field) {
-            if (in_array($screen->taxonomy, $field['taxonomies']) && $column_name == $id && $field['column']) {
-                if ($field['lang']) {
-                    $tmp_values = array();
-                    foreach ($languages as $id_lang => $lang) {
-                        $tmp_value = $this->display_meta_content($field, $term_id, $id_lang . '__' . $column_name);
-                        if (!empty($tmp_value)) {
-                            $tmp_values[] = '<strong>' . $id_lang . '</strong> : ' . $tmp_value;
-                        }
-                    }
-                    echo implode('<hr class="wputaxometas-hr" />', $tmp_values);
-                }
-                else {
-                    echo $this->display_meta_content($field, $term_id, $column_name);
-                }
-                return;
+            if (!isset($field['taxonomies'], $field['column']) || !in_array($screen->taxonomy, $field['taxonomies']) || $column_name != $id) {
+                continue;
             }
+            if (isset($field['lang'])) {
+                $tmp_values = array();
+                foreach ($languages as $id_lang => $lang) {
+                    $tmp_value = $this->display_meta_content($field, $term_id, $id_lang . '__' . $column_name);
+                    if (!empty($tmp_value)) {
+                        $tmp_values[] = '<strong>' . $id_lang . '</strong> : ' . $tmp_value;
+                    }
+                }
+                echo implode('<hr class="wputaxometas-hr" />', $tmp_values);
+            } else {
+                echo $this->display_meta_content($field, $term_id, $column_name);
+            }
+            return;
         }
     }
 
-    function display_meta_content($field, $term_id, $column_name) {
+    public function display_meta_content($field, $term_id, $column_name) {
         $max_chars = 50;
 
         $value = wputaxometas_get_term_meta($term_id, $column_name, 1);
@@ -330,19 +354,19 @@ class WPUTaxoMetas {
         // If validate value is correct
         if ($valid_value == $value) {
             switch ($field['type']) {
-                case 'select':
-                case 'checkbox':
-                case 'radio':
-                    return $field['datas'][$value];
+            case 'select':
+            case 'checkbox':
+            case 'radio':
+                return $field['datas'][$value];
                 break;
-                case 'attachment':
-                    $image = wp_get_attachment_image_src($value, 'thumbnail');
-                    if (isset($image[0])) {
-                        return '<img class="wputaxometas-col-img" src="' . $image[0] . '" alt="" />';
-                    }
+            case 'attachment':
+                $image = wp_get_attachment_image_src($value, 'thumbnail');
+                if (isset($image[0])) {
+                    return '<img class="wputaxometas-col-img" src="' . $image[0] . '" alt="" />';
+                }
                 break;
-                case 'color':
-                    return '<span class="wputaxometas-col-color" style="background-color:' . $value . '"></span>';
+            case 'color':
+                return '<span class="wputaxometas-col-color" style="background-color:' . $value . '"></span>';
                 break;
             }
         }
@@ -354,7 +378,7 @@ class WPUTaxoMetas {
         return $value;
     }
 
-    function set_options() {
+    public function set_options() {
 
         // Get Fields
         $this->fields = apply_filters('wputaxometas_fields', array());
@@ -398,14 +422,14 @@ class WPUTaxoMetas {
             // Default datas
             if (!isset($field['datas']) || $field['type'] == 'checkbox') {
                 $this->fields[$id]['datas'] = array(
-                    __('No', 'wputaxometas') ,
+                    __('No', 'wputaxometas'),
                     __('Yes', 'wputaxometas')
                 );
             }
         }
     }
 
-    function get_languages() {
+    public function get_languages() {
         global $q_config, $polylang;
         $languages = array();
 
