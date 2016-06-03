@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.14
+Version: 0.15
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -304,14 +304,21 @@ class WPUTaxoMetas {
         echo '</td></tr>';
     }
 
-    public function column_title($columns) {
-        $screen = get_current_screen();
-        if (!is_object($screen) || !property_exists($screen, 'taxonomy')) {
-            return $columns;
-        }
+    public function get_column_taxonomy($current_filter) {
+        $to_replace = array(
+            'manage_edit-',
+            'manage_',
+            '_sortable_columns',
+            '_columns',
+            '_custom_column'
+        );
+        return str_replace($to_replace, '', $current_filter);
+    }
 
+    public function column_title($columns) {
+        $current_taxonomy = $this->get_column_taxonomy(current_filter());
         foreach ($this->fields as $id => $field) {
-            if (isset($field['taxonomies'], $field['column']) && in_array($screen->taxonomy, $field['taxonomies']) && $field['column']) {
+            if (isset($field['taxonomies'], $field['column']) && in_array($current_taxonomy, $field['taxonomies']) && $field['column']) {
                 $columns[$id] = $field['label'];
             }
         }
@@ -320,10 +327,9 @@ class WPUTaxoMetas {
 
     public function column_content($deprecated, $column_name, $term_id) {
         $languages = $this->get_languages();
-        $screen = get_current_screen();
-
+        $current_taxonomy = $this->get_column_taxonomy(current_filter());
         foreach ($this->fields as $id => $field) {
-            if (!isset($field['taxonomies'], $field['column']) || !in_array($screen->taxonomy, $field['taxonomies']) || $column_name != $id) {
+            if (!isset($field['taxonomies'], $field['column']) || !in_array($current_taxonomy, $field['taxonomies']) || $column_name != $id) {
                 continue;
             }
             if (isset($field['lang'])) {
@@ -338,13 +344,13 @@ class WPUTaxoMetas {
             } else {
                 echo $this->display_meta_content($field, $term_id, $column_name);
             }
+
             return;
         }
     }
 
     public function display_meta_content($field, $term_id, $column_name) {
         $max_chars = 50;
-
         $value = wputaxometas_get_term_meta($term_id, $column_name, 1);
         $valid_value = $this->validate_field($field, $value);
         if ($value != '0' && empty($value)) {
