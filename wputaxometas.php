@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.15
+Version: 0.16
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -61,12 +61,18 @@ class WPUTaxoMetas {
 
             if (current_user_can($taxonomy->cap->edit_terms)) {
                 add_action($taxo . '_edit_form_fields', array(&$this,
-                    'extra_taxo_field'
+                    'extra_taxo_field_edit'
+                ));
+                add_action($taxo . '_add_form_fields', array(&$this,
+                    'extra_taxo_field_add'
                 ));
                 add_action('created_term', array(&$this,
                     'default_values'
                 ), 10, 3);
                 add_action('edited_' . $taxo, array(&$this,
+                    'save_extra_taxo_field'
+                ));
+                add_action('create_' . $taxo, array(&$this,
                     'save_extra_taxo_field'
                 ));
             }
@@ -102,9 +108,20 @@ class WPUTaxoMetas {
     }
 
     public function save_extra_taxo_field($t_id) {
-        if (isset($_POST['term_meta']) && isset($_POST['taxonomy']) && wp_verify_nonce($_POST['wpu-taxometas-term-' . $t_id], 'wpu-taxometas-term')) {
+        if (!isset($_POST['term_meta']) || !isset($_POST['taxonomy'])) {
+            return;
+        }
+        $nonce_key = isset($_POST['wpu-taxometas-term-' . $t_id]) ? $_POST['wpu-taxometas-term-' . $t_id] : '';
+        $nonce_key = isset($_POST['wpu-taxometas-term-default']) ? $_POST['wpu-taxometas-term-default'] : $nonce_key;
+
+        if (empty($nonce_key)) {
+            return;
+        }
+
+        if (wp_verify_nonce($nonce_key, 'wpu-taxometas-term')) {
             $this->update_metas_for_term($t_id, $_POST['taxonomy'], $_POST['term_meta']);
         }
+
     }
 
     public function update_metas_for_term($t_id, $taxonomy, $metas) {
@@ -188,8 +205,39 @@ class WPUTaxoMetas {
         return $value;
     }
 
-    public function extra_taxo_field($tag) {
-        $t_id = $tag->term_id;
+    public function extra_taxo_field_add($tax_name) {
+        $languages = $this->get_languages();
+        wp_nonce_field('wpu-taxometas-term', 'wpu-taxometas-term-default');
+        foreach ($this->fields as $id => $field) {
+            if (!in_array($tax_name, $field['taxonomies'])) {
+                continue;
+            }
+            if (!$field['display_addform']) {
+                continue;
+            }
+            if (in_array($field['type'], array('attachment'))) {
+                continue;
+            }
+            $term_meta = array();
+            if (!empty($languages) && isset($field['lang']) && $field['lang']) {
+                $field_label = $field['label'];
+                foreach ($languages as $id_lang => $language) {
+                    $tmp_id = $id_lang . '__' . $id;
+                    $field['label'] = $field_label;
+                    if (!$this->qtranslatex) {
+                        $field['label'] .= ' [' . $id_lang . ']';
+                    }
+                    $this->load_field_content($tmp_id, $field, $term_meta, $id_lang, 'add');
+                }
+            } else {
+                $this->load_field_content($id, $field, $term_meta, false, 'add');
+            }
+
+        }
+    }
+
+    public function extra_taxo_field_edit($tax) {
+        $t_id = $tax->term_id;
         $languages = $this->get_languages();
         wp_nonce_field('wpu-taxometas-term', 'wpu-taxometas-term-' . $t_id);
 
@@ -214,11 +262,11 @@ class WPUTaxoMetas {
         }
     }
 
-    public function load_field_content($id, $field, $term_meta, $id_lang = false) {
+    public function load_field_content($id, $field, $term_meta, $id_lang = false, $mode = 'edit') {
 
         // Set value
         $value = '';
-        if (isset($term_meta[$id])) {
+        if ($mode == 'edit' && isset($term_meta[$id])) {
             $value = stripslashes($term_meta[$id]);
         }
 
@@ -226,9 +274,19 @@ class WPUTaxoMetas {
         $htmlname = 'term_meta[' . $id . ']';
         $htmlid = 'term_meta_' . $id;
         $idname = 'name="' . $htmlname . '" id="' . $htmlid . '"';
+        $label = '<label for="' . $htmlid . '">' . $field['label'] . '</label>';
 
-        echo '<tr ' . ($id_lang != false ? 'data-wputaxometaslang="' . $id_lang . '"' : '') . ' class="form-field wpu-taxometas-form"><th scope="row" valign="top"><label for="' . $htmlid . '">' . $field['label'] . '</label></th>';
-        echo '<td>';
+        if ($mode == 'edit') {
+
+            echo '<tr ' . ($id_lang != false ? 'data-wputaxometaslang="' . $id_lang . '"' : '') . ' class="form-field wpu-taxometas-form"><th scope="row" valign="top">' . $label . '</th>';
+            echo '<td>';
+        }
+
+        if ($mode == 'add') {
+            echo '<div class="form-field">';
+            echo $label;
+        }
+
         switch ($field['type']) {
         case 'attachment':
             $img = '';
@@ -298,10 +356,22 @@ class WPUTaxoMetas {
         default:
             echo '<input ' . ($id_lang != false ? 'class="qtranxs-translatable"' : '') . ' type="text" ' . $idname . ' value="' . esc_attr($value) . '">';
         }
-        if (isset($field['description'])) {
-            echo '<br /><span class="description">' . esc_html($field['description']) . '</span>';
+
+        if ($mode == 'edit') {
+            if (isset($field['description'])) {
+                echo '<br /><span class="description">' . esc_html($field['description']) . '</span>';
+            }
+
+            echo '</td></tr>';
         }
-        echo '</td></tr>';
+
+        if ($mode == 'add') {
+            if (isset($field['description'])) {
+                echo '<p class="description">' . esc_html($field['description']) . '</p>';
+            }
+
+            echo '</div>';
+        }
     }
 
     public function get_column_taxonomy($current_filter) {
@@ -344,13 +414,13 @@ class WPUTaxoMetas {
             } else {
                 echo $this->display_meta_content($field, $term_id, $column_name);
             }
-
             return;
         }
     }
 
     public function display_meta_content($field, $term_id, $column_name) {
         $max_chars = 50;
+
         $value = wputaxometas_get_term_meta($term_id, $column_name, 1);
         $valid_value = $this->validate_field($field, $value);
         if ($value != '0' && empty($value)) {
@@ -431,6 +501,10 @@ class WPUTaxoMetas {
                     __('No', 'wputaxometas'),
                     __('Yes', 'wputaxometas')
                 );
+            }
+
+            if (!isset($field['display_addform'])) {
+                $this->fields[$id]['display_addform'] = false;
             }
         }
     }
