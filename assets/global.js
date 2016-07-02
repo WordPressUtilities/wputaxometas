@@ -2,10 +2,30 @@
 'use strict';
 
 jQuery(document).ready(function() {
+    wputh_taxometas_set_addtag();
     wputh_taxometas_set_media();
     wputh_taxometas_set_colorpicker();
     wputh_taxometas_set_checkbox();
 });
+
+/* ----------------------------------------------------------
+  Add tag
+---------------------------------------------------------- */
+
+var wputh_taxometas_set_addtag = function() {
+    jQuery('#addtag #submit').on('click', function(e) {
+        // Form is clearly invalid : stop
+        var form = jQuery(this).closest('form');
+        if (!validateForm(form)) {
+            return false;
+        }
+
+        // Clear old images after a small time
+        setTimeout(function() {
+            jQuery('.wputaxometas_add_media').trigger('unset_media');
+        }, 500);
+    });
+};
 
 /* ----------------------------------------------------------
   Checkbox
@@ -40,10 +60,9 @@ var wputaxometas_file_frame,
     wputaxometas_datafor;
 
 var wputh_taxometas_set_media = function() {
-    jQuery('.wpu-taxometas-upload-wrap .x').on('click', function(e) {
-        e.preventDefault();
-        var $this = jQuery(this),
-            $button = false,
+
+    function unset_media($this) {
+        var $button = false,
             $preview = false,
             $parent = false;
 
@@ -60,10 +79,18 @@ var wputh_taxometas_set_media = function() {
 
         // Reset attachment value
         jQuery('#' + wputaxometas_datafor).attr('value', '');
+    }
 
+    jQuery('body').on('click', '.wpu-taxometas-upload-wrap .x', function(e) {
+        e.preventDefault();
+        unset_media(jQuery(this));
     });
 
-    jQuery('.wpu-taxometas-form').on('click', '.wputaxometas_add_media', function(event) {
+    jQuery('body').on('unset_media', '.wputaxometas_add_media', function(e) {
+        unset_media(jQuery(this));
+    });
+
+    jQuery('body').on('click', '.wputaxometas_add_media', function(event) {
         event.preventDefault();
         var $this = jQuery(this);
 

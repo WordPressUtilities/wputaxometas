@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.16
+Version: 0.17
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -14,6 +14,7 @@ License URI: http://opensource.org/licenses/MIT
 defined('ABSPATH') or die(':(');
 
 class WPUTaxoMetas {
+    public $version = '0.17';
     public $qtranslate = false;
     public $qtranslatex = false;
     public $fields = array();
@@ -93,16 +94,16 @@ class WPUTaxoMetas {
     }
 
     public function load_assets_qtranslatex() {
-        wp_enqueue_script('wputaxometas_qtranslatex', plugins_url('/assets/qtranslatex.js', __FILE__), array(), '', 1);
+        wp_enqueue_script('wputaxometas_qtranslatex', plugins_url('/assets/qtranslatex.js', __FILE__), array(), $this->version, 1);
     }
 
     public function load_assets() {
         $screen = get_current_screen();
-        if ($screen->base == 'edit-tags') {
+        if ($screen->base == 'edit-tags' || $screen->base == 'term') {
             wp_enqueue_media();
             wp_enqueue_style('wp-color-picker');
             wp_enqueue_script('wp-color-picker');
-            wp_enqueue_script('wputaxometas_scripts', plugins_url('/assets/global.js', __FILE__));
+            wp_enqueue_script('wputaxometas_scripts', plugins_url('/assets/global.js', __FILE__), array(), $this->version);
         }
         wp_enqueue_style('wputaxometas_style', plugins_url('assets/style.css', __FILE__));
     }
@@ -215,9 +216,7 @@ class WPUTaxoMetas {
             if (!$field['display_addform']) {
                 continue;
             }
-            if (in_array($field['type'], array('attachment'))) {
-                continue;
-            }
+
             $term_meta = array();
             if (!empty($languages) && isset($field['lang']) && $field['lang']) {
                 $field_label = $field['label'];
@@ -242,7 +241,7 @@ class WPUTaxoMetas {
         wp_nonce_field('wpu-taxometas-term', 'wpu-taxometas-term-' . $t_id);
 
         foreach ($this->fields as $id => $field) {
-            if (in_array($tag->taxonomy, $field['taxonomies'])) {
+            if (in_array($tax->taxonomy, $field['taxonomies'])) {
                 if (!empty($languages) && isset($field['lang']) && $field['lang']) {
                     $field_label = $field['label'];
                     foreach ($languages as $id_lang => $language) {
