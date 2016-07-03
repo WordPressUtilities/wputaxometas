@@ -13,17 +13,13 @@ jQuery(document).ready(function() {
 ---------------------------------------------------------- */
 
 var wputh_taxometas_set_addtag = function() {
-    jQuery('#addtag #submit').on('click', function(e) {
-        // Form is clearly invalid : stop
-        var form = jQuery(this).closest('form');
-        if (!validateForm(form)) {
-            return false;
+    jQuery(document).ajaxComplete(function(e, response) {
+        if (!response.responseText) {
+            return;
         }
-
-        // Clear old images after a small time
-        setTimeout(function() {
+        if (response.responseText.match(/<wp_ajax><response action='add-tag_/)) {
             jQuery('.wputaxometas_add_media').trigger('unset_media');
-        }, 500);
+        }
     });
 };
 
@@ -121,7 +117,7 @@ var wputh_taxometas_set_media = function() {
             jQuery('#' + wputaxometas_datafor).attr('value', attachment.id);
 
             // Set preview image
-            $preview.html('<img class="wpu-taxometas-upload-preview" src="' + attachment.url + '" />');
+            $preview.html('<img class="wpu-taxometas-upload-preview" src="' + attachment.url + '" /><span data-for="' + wputaxometas_datafor + '" class="x">&times;</span>');
 
             // Change button label
             $this.html($preview.attr('data-label'));
