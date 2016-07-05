@@ -18,7 +18,12 @@ var wputh_taxometas_set_addtag = function() {
             return;
         }
         if (response.responseText.match(/<wp_ajax><response action='add-tag_/)) {
+            // Unset medias
             jQuery('.wputaxometas_add_media').trigger('unset_media');
+            // Clear TinyMCE
+            tinyMCE.activeEditor.setContent('');
+            // Reset fields
+            jQuery("#addtag").trigger('reset');
         }
     });
 };
