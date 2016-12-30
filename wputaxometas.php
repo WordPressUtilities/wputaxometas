@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: http://github.com/Darklg/WPUtilities
 Description: Simple admin for taxo metas
-Version: 0.17.2
+Version: 0.17.3
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -14,7 +14,7 @@ License URI: http://opensource.org/licenses/MIT
 defined('ABSPATH') or die(':(');
 
 class WPUTaxoMetas {
-    public $version = '0.17.2';
+    public $version = '0.17.3';
     public $qtranslate = false;
     public $qtranslatex = false;
     public $fields = array();
@@ -238,7 +238,9 @@ class WPUTaxoMetas {
     public function extra_taxo_field_edit($tax) {
         $t_id = $tax->term_id;
         $languages = $this->get_languages();
+        echo '</table>';
         wp_nonce_field('wpu-taxometas-term', 'wpu-taxometas-term-' . $t_id);
+        echo '<table class="form-table">';
 
         foreach ($this->fields as $id => $field) {
             if (in_array($tax->taxonomy, $field['taxonomies'])) {
@@ -263,6 +265,10 @@ class WPUTaxoMetas {
 
     public function load_field_content($id, $field, $term_meta, $id_lang = false, $mode = 'edit') {
 
+        if($field['type'] == 'title'){
+            echo '</table><h2>' . $field['label'] . '</h2><table class="form-table">';
+        }
+
         // Set value
         $value = '';
         if ($mode == 'edit' && isset($term_meta[$id])) {
@@ -277,7 +283,7 @@ class WPUTaxoMetas {
 
         if ($mode == 'edit') {
 
-            echo '<tr ' . ($id_lang != false ? 'data-wputaxometaslang="' . $id_lang . '"' : '') . ' class="form-field wpu-taxometas-form"><th scope="row" valign="top">' . $label . '</th>';
+            echo '<tr' . ($id_lang != false ? ' data-wputaxometaslang="' . $id_lang . '"' : '') . ' class="form-field wpu-taxometas-form"><th scope="row" style="vertical-align:top;">' . $label . '</th>';
             echo '<td>';
         }
 
