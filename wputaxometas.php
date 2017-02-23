@@ -2,9 +2,9 @@
 
 /*
 Plugin Name: WPU Taxo Metas
-Plugin URI: http://github.com/Darklg/WPUtilities
+Plugin URI: https://github.com/WordPressUtilities/wputaxometas
 Description: Simple admin for taxo metas
-Version: 0.17.3
+Version: 0.18
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -14,7 +14,7 @@ License URI: http://opensource.org/licenses/MIT
 defined('ABSPATH') or die(':(');
 
 class WPUTaxoMetas {
-    public $version = '0.17.3';
+    public $version = '0.18';
     public $qtranslate = false;
     public $qtranslatex = false;
     public $fields = array();
@@ -265,7 +265,7 @@ class WPUTaxoMetas {
 
     public function load_field_content($id, $field, $term_meta, $id_lang = false, $mode = 'edit') {
 
-        if($field['type'] == 'title'){
+        if ($field['type'] == 'title') {
             echo '</table><h2>' . $field['label'] . '</h2><table class="form-table">';
         }
 
@@ -335,6 +335,21 @@ class WPUTaxoMetas {
                 echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
                 foreach ($lastposts as $post) {
                     echo '<option value="' . $post->ID . '" ' . ($post->ID == $value ? 'selected="selected"' : '') . '>' . $post->post_title . '</option>';
+                }
+                echo '</select>';
+            }
+            break;
+        case 'taxonomy':
+            $allterms = get_terms(array(
+                'taxonomy' => (isset($field['taxonomy_type']) ? $field['taxonomy_type'] : 'category'),
+                'hide_empty' => false,
+                'orderby' => 'name'
+            ));
+            if (!empty($allterms)) {
+                echo '<select ' . $idname . '>';
+                echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
+                foreach ($allterms as $term) {
+                    echo '<option value="' . $term->term_id . '" ' . ($term->term_id == $value ? 'selected="selected"' : '') . '>' . $term->name . '</option>';
                 }
                 echo '</select>';
             }

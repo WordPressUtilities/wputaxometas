@@ -37,6 +37,7 @@ Fields parameters :
 * "taxonomies" : Array (optional) / Set the taxonomies for which the meta will be used. Default to array( 'category' )
 * "description" : String (optional) / Add a long description to the field administration to help the user in filling this field.
 * "post_type" : String (optional) / Add a post type to target. Default to "post".
+* "taxonomy_type" : String (optional) / Add a taxonomy type to target. Default to "category".
 * "datas" : Array (optional) / Datas to use in select/radio. Default to array('No','Yes').
 * "type" : String (optional) / Set a kind of form field. Default to "text".
 * "column" : Bool (optional) / Display in taxo admin as a column. Default to false.
@@ -44,6 +45,7 @@ Fields parameters :
 Fields types :
 ---
 
+* "taxonomy" : select between terms in a taxonomy.
 * "post" : select between posts.
 * "text" : input type text.
 * "email" : input type email.
