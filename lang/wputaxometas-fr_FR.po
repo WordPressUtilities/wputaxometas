@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2017-02-23 20:38+0100\n"
+"POT-Creation-Date: 2017-02-24 17:01+0100\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Darklg <darklg.blog@gmail.com>\n"
 "Language-Team: \n"
@@ -15,23 +15,23 @@ msgstr ""
 "X-Poedit-KeywordsList: __;_e\n"
 "X-Poedit-SearchPath-0: ../.\n"
 
-#: .././wputaxometas.php:298
+#: .././wputaxometas.php:302
 msgid "Add a picture"
 msgstr "Ajouter une image"
 
-#: .././wputaxometas.php:300
+#: .././wputaxometas.php:304
 msgid "Change this picture"
 msgstr "Modifier cette image"
 
-#: .././wputaxometas.php:320 .././wputaxometas.php:335
-#: .././wputaxometas.php:350
+#: .././wputaxometas.php:324 .././wputaxometas.php:339
+#: .././wputaxometas.php:354
 msgid "Select a value"
 msgstr "Sélectionner une valeur"
 
-#: .././wputaxometas.php:521
+#: .././wputaxometas.php:530
 msgid "No"
 msgstr "Non"
 
-#: .././wputaxometas.php:522
+#: .././wputaxometas.php:531
 msgid "Yes"
 msgstr "Oui"

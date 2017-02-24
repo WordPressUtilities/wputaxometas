@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: https://github.com/WordPressUtilities/wputaxometas
 Description: Simple admin for taxo metas
-Version: 0.18
+Version: 0.18.1
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -14,7 +14,7 @@ License URI: http://opensource.org/licenses/MIT
 defined('ABSPATH') or die(':(');
 
 class WPUTaxoMetas {
-    public $version = '0.18';
+    public $version = '0.18.1';
     public $qtranslate = false;
     public $qtranslatex = false;
     public $fields = array();
@@ -279,10 +279,14 @@ class WPUTaxoMetas {
         $htmlname = 'term_meta[' . $id . ']';
         $htmlid = 'term_meta_' . $id;
         $idname = 'name="' . $htmlname . '" id="' . $htmlid . '"';
-        $label = '<label for="' . $htmlid . '">' . $field['label'] . '</label>';
+
+        if ($field['required']) {
+            $idname .= ' required="required"';
+        }
+
+        $label = '<label for="' . $htmlid . '">' . $field['label'] . ($field['required'] ? ' <b>*</b> ' : '') . '</label>';
 
         if ($mode == 'edit') {
-
             echo '<tr' . ($id_lang != false ? ' data-wputaxometaslang="' . $id_lang . '"' : '') . ' class="form-field wpu-taxometas-form"><th scope="row" style="vertical-align:top;">' . $label . '</th>';
             echo '<td>';
         }
@@ -499,6 +503,11 @@ class WPUTaxoMetas {
             // Set column visibility
             if (!isset($field['column'])) {
                 $this->fields[$id]['column'] = false;
+            }
+
+            // Required field
+            if (!isset($field['required'])) {
+                $this->fields[$id]['required'] = false;
             }
 
             // Set default label
