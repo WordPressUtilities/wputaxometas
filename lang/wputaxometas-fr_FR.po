@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2017-02-24 17:01+0100\n"
+"POT-Creation-Date: 2017-04-18 14:54+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Darklg <darklg.blog@gmail.com>\n"
 "Language-Team: \n"
@@ -28,10 +28,10 @@ msgstr "Modifier cette image"
 msgid "Select a value"
 msgstr "Sélectionner une valeur"
 
-#: .././wputaxometas.php:530
+#: .././wputaxometas.php:526
 msgid "No"
 msgstr "Non"
 
-#: .././wputaxometas.php:531
+#: .././wputaxometas.php:527
 msgid "Yes"
 msgstr "Oui"
