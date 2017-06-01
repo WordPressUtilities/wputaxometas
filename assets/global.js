@@ -21,7 +21,9 @@ var wputh_taxometas_set_addtag = function() {
             // Unset medias
             jQuery('.wputaxometas_add_media').trigger('unset_media');
             // Clear TinyMCE
-            tinyMCE.activeEditor.setContent('');
+            if (typeof tinyMCE == 'object') {
+                tinyMCE.activeEditor.setContent('');
+            }
             // Reset fields
             jQuery("#addtag").trigger('reset');
         }
