@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: https://github.com/WordPressUtilities/wputaxometas
 Description: Simple admin for taxo metas
-Version: 0.18.4
+Version: 0.18.5
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -14,7 +14,7 @@ License URI: http://opensource.org/licenses/MIT
 defined('ABSPATH') or die(':(');
 
 class WPUTaxoMetas {
-    public $version = '0.18.4';
+    public $version = '0.18.5';
     public $qtranslate = false;
     public $qtranslatex = false;
     public $fields = array();
@@ -49,6 +49,9 @@ class WPUTaxoMetas {
         // Add hook to edit category
         foreach ($this->taxonomies as $taxo) {
             $taxonomy = get_taxonomy($taxo);
+            if (!is_object($taxonomy)) {
+                continue;
+            }
 
             add_filter('manage_edit-' . $taxo . '_columns', array(&$this,
                 'column_title'
