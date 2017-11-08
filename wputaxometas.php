@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: https://github.com/WordPressUtilities/wputaxometas
 Description: Simple admin for taxo metas
-Version: 0.18.5
+Version: 0.18.6
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -14,7 +14,7 @@ License URI: http://opensource.org/licenses/MIT
 defined('ABSPATH') or die(':(');
 
 class WPUTaxoMetas {
-    public $version = '0.18.5';
+    public $version = '0.18.6';
     public $qtranslate = false;
     public $qtranslatex = false;
     public $fields = array();
@@ -180,8 +180,7 @@ class WPUTaxoMetas {
 
         switch ($field['type']) {
         case 'attachment':
-            return !is_numeric($value) ? false : $value;
-            break;
+        case 'taxonomy':
         case 'post':
             return !is_numeric($value) ? false : $value;
             break;
@@ -340,7 +339,12 @@ class WPUTaxoMetas {
             ));
             if (!empty($lastposts)) {
                 echo '<select ' . $idname . '>';
-                echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
+                if($field['required']){
+                    echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
+                }
+                else {
+                    echo '<option value="0">' . __('Select a value', 'wputaxometas') . '</option>';
+                }
                 foreach ($lastposts as $post) {
                     echo '<option value="' . $post->ID . '" ' . ($post->ID == $value ? 'selected="selected"' : '') . '>' . $post->post_title . '</option>';
                 }
@@ -355,7 +359,12 @@ class WPUTaxoMetas {
             ));
             if (!empty($allterms)) {
                 echo '<select ' . $idname . '>';
-                echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
+                if($field['required']){
+                    echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
+                }
+                else {
+                    echo '<option value="0">' . __('Select a value', 'wputaxometas') . '</option>';
+                }
                 foreach ($allterms as $term) {
                     echo '<option value="' . $term->term_id . '" ' . ($term->term_id == $value ? 'selected="selected"' : '') . '>' . $term->name . '</option>';
                 }
