@@ -4,9 +4,9 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: https://github.com/WordPressUtilities/wputaxometas
 Description: Simple admin for taxo metas
-Version: 0.18.6
+Version: 0.19.0
 Author: Darklg
-Author URI: http://darklg.me/
+Author URI: https://darklg.me/
 License: MIT License
 License URI: http://opensource.org/licenses/MIT
 */
@@ -14,17 +14,29 @@ License URI: http://opensource.org/licenses/MIT
 defined('ABSPATH') or die(':(');
 
 class WPUTaxoMetas {
-    public $version = '0.18.6';
+    public $plugin_version = '0.19.0';
     public $qtranslate = false;
     public $qtranslatex = false;
     public $fields = array();
     public $polylang = false;
+    public $wpml = false;
 
     public function __construct($hooks = true) {
         $this->set_options();
+        $this->set_hooks();
         if ($hooks) {
             $this->set_admin_hooks();
         }
+    }
+
+    public function set_hooks() {
+
+        /* Auto-updater */
+        include dirname(__FILE__) . '/inc/WPUBaseUpdate/WPUBaseUpdate.php';
+        $this->settings_update = new \wputaxometas\WPUBaseUpdate(
+            'WordPressUtilities',
+            'wputaxometas',
+            $this->plugin_version);
     }
 
     public function set_admin_hooks() {
@@ -97,7 +109,7 @@ class WPUTaxoMetas {
     }
 
     public function load_assets_qtranslatex() {
-        wp_enqueue_script('wputaxometas_qtranslatex', plugins_url('/assets/qtranslatex.js', __FILE__), array(), $this->version, 1);
+        wp_enqueue_script('wputaxometas_qtranslatex', plugins_url('/assets/qtranslatex.js', __FILE__), array(), $this->plugin_version, 1);
     }
 
     public function load_assets() {
@@ -106,7 +118,7 @@ class WPUTaxoMetas {
             wp_enqueue_media();
             wp_enqueue_style('wp-color-picker');
             wp_enqueue_script('wp-color-picker');
-            wp_enqueue_script('wputaxometas_scripts', plugins_url('/assets/global.js', __FILE__), array(), $this->version);
+            wp_enqueue_script('wputaxometas_scripts', plugins_url('/assets/global.js', __FILE__), array(), $this->plugin_version);
         }
         wp_enqueue_style('wputaxometas_style', plugins_url('assets/style.css', __FILE__));
     }
@@ -339,10 +351,9 @@ class WPUTaxoMetas {
             ));
             if (!empty($lastposts)) {
                 echo '<select ' . $idname . '>';
-                if($field['required']){
+                if ($field['required']) {
                     echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
-                }
-                else {
+                } else {
                     echo '<option value="0">' . __('Select a value', 'wputaxometas') . '</option>';
                 }
                 foreach ($lastposts as $post) {
@@ -359,10 +370,9 @@ class WPUTaxoMetas {
             ));
             if (!empty($allterms)) {
                 echo '<select ' . $idname . '>';
-                if($field['required']){
+                if ($field['required']) {
                     echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
-                }
-                else {
+                } else {
                     echo '<option value="0">' . __('Select a value', 'wputaxometas') . '</option>';
                 }
                 foreach ($allterms as $term) {
@@ -572,6 +582,16 @@ class WPUTaxoMetas {
                 $languages[$lang->slug] = $lang->name;
             }
         }
+
+        // Obtaining from WPML
+        if (function_exists('icl_get_languages')) {
+            $this->wpml = true;
+            $wpml_lang = icl_get_languages();
+            foreach ($wpml_lang as $lang) {
+                $languages[$lang['code']] = $lang['native_name'];
+            }
+        }
+
         return $languages;
     }
 }
