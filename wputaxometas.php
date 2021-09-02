@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: https://github.com/WordPressUtilities/wputaxometas
 Description: Simple admin for taxo metas
-Version: 0.19.1
+Version: 0.20.0
 Author: Darklg
 Author URI: https://darklg.me/
 License: MIT License
@@ -14,7 +14,7 @@ License URI: http://opensource.org/licenses/MIT
 defined('ABSPATH') or die(':(');
 
 class WPUTaxoMetas {
-    public $plugin_version = '0.19.1';
+    public $plugin_version = '0.20.0';
     public $qtranslate = false;
     public $qtranslatex = false;
     public $fields = array();
@@ -210,7 +210,34 @@ class WPUTaxoMetas {
             break;
         case 'radio':
         case 'select':
-            return !array_key_exists($value, $field['datas']) ? $first_key : $value;
+            if ($field['type'] == 'select' && $field['multiple']) {
+                $array_value = array();
+
+                # Old textual value
+                if (!is_array($value) && array_key_exists($value, $field['datas'])) {
+                    return array($value);
+                }
+
+                # New value
+                if (is_array($value)) {
+                    $array_value = array();
+                    foreach ($value as $subvalue) {
+                        if (array_key_exists($subvalue, $field['datas'])) {
+                            $array_value[] = $subvalue;
+                        }
+                    }
+                }
+
+                # Defaults to base value
+                if (empty($array_value)) {
+                    return array($first_key);
+                }
+
+                return $array_value;
+
+            } else {
+                return !array_key_exists($value, $field['datas']) ? $first_key : $value;
+            }
             break;
         case 'color':
             return !preg_match('/^#[A-Fa-f0-9]{6}$/i', $value) ? '#000000' : $value;
@@ -292,8 +319,15 @@ class WPUTaxoMetas {
 
         // Set ID / Name
         $htmlname = 'term_meta[' . $id . ']';
+        if ($field['type'] == 'select' && $field['multiple']) {
+            $htmlname .= '[]';
+        }
         $htmlid = 'term_meta_' . $id;
         $idname = 'name="' . $htmlname . '" id="' . $htmlid . '"';
+
+        if ($field['type'] == 'select' && $field['multiple']) {
+            $idname .= ' multiple="multiple"';
+        }
 
         if ($field['required']) {
             $idname .= ' required="required"';
@@ -338,7 +372,11 @@ class WPUTaxoMetas {
             echo '<select ' . $idname . '>';
             echo '<option value="" disabled selected style="display:none;">' . __('Select a value', 'wputaxometas') . '</option>';
             foreach ($field['datas'] as $key => $var) {
-                echo '<option value="' . $key . '" ' . ($key == $value ? 'selected="selected"' : '') . '>' . $var . '</option>';
+                $is_selected = $key == $value;
+                if (isset($term_meta[$id]) && is_array($term_meta[$id])) {
+                    $is_selected = in_array($key, $term_meta[$id]);
+                }
+                echo '<option value="' . $key . '" ' . ($is_selected ? 'selected="selected"' : '') . '>' . $var . '</option>';
             }
             echo '</select>';
             break;
@@ -527,6 +565,11 @@ class WPUTaxoMetas {
             // Required field
             if (!isset($field['required'])) {
                 $this->fields[$id]['required'] = false;
+            }
+
+            // Multiple attribute
+            if (!isset($field['multiple'])) {
+                $this->fields[$id]['multiple'] = false;
             }
 
             // Set default label
