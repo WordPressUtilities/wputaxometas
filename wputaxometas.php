@@ -4,7 +4,7 @@
 Plugin Name: WPU Taxo Metas
 Plugin URI: https://github.com/WordPressUtilities/wputaxometas
 Description: Simple admin for taxo metas
-Version: 0.20.0
+Version: 0.21.0
 Author: Darklg
 Author URI: https://darklg.me/
 License: MIT License
@@ -14,7 +14,7 @@ License URI: http://opensource.org/licenses/MIT
 defined('ABSPATH') or die(':(');
 
 class WPUTaxoMetas {
-    public $plugin_version = '0.20.0';
+    public $plugin_version = '0.21.0';
     public $qtranslate = false;
     public $qtranslatex = false;
     public $fields = array();
@@ -311,6 +311,8 @@ class WPUTaxoMetas {
             return;
         }
 
+        echo apply_filters('wputaxometas__box_content__before_field_main', '', $id, $field, $term_meta, $id_lang, $mode);
+
         // Set value
         $value = '';
         if ($mode == 'edit' && isset($term_meta[$id])) {
@@ -335,13 +337,17 @@ class WPUTaxoMetas {
 
         $label = '<label for="' . $htmlid . '">' . $field['label'] . ($field['required'] ? ' <b>*</b> ' : '') . '</label>';
 
+        $before_field = apply_filters('wputaxometas__box_content__before_field', '', $id, $field, $term_meta, $id_lang, $mode);
+
         if ($mode == 'edit') {
             echo '<tr' . ($id_lang != false ? ' data-wputaxometaslang="' . $id_lang . '"' : '') . ' class="form-field wpu-taxometas-form"><th scope="row" style="vertical-align:top;">' . $label . '</th>';
             echo '<td>';
+            echo $before_field;
         }
 
         if ($mode == 'add') {
             echo '<div class="form-field">';
+            echo $before_field;
             echo $label;
         }
 
@@ -446,6 +452,8 @@ class WPUTaxoMetas {
             echo '<p class="description">' . esc_html($field['description']) . '</p>';
         }
 
+        echo apply_filters('wputaxometas__box_content__after_field', '', $id, $field, $term_meta, $id_lang, $mode);
+
         if ($mode == 'edit') {
             echo '</td></tr>';
         }
@@ -453,6 +461,7 @@ class WPUTaxoMetas {
         if ($mode == 'add') {
             echo '</div>';
         }
+        echo apply_filters('wputaxometas__box_content__after_field_main', '', $id, $field, $term_meta, $id_lang, $mode);
     }
 
     public function get_column_taxonomy($current_filter) {
