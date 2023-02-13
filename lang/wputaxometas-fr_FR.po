@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2020-10-31 19:46+0100\n"
+"POT-Creation-Date: 2023-02-13 11:56+0100\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Darklg <darklg.blog@gmail.com>\n"
 "Language-Team: \n"
@@ -9,30 +9,34 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.1\n"
+"X-Generator: Poedit 3.2.2\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-Basepath: .\n"
 "X-Poedit-KeywordsList: __;_e\n"
 "X-Poedit-SearchPath-0: ../.\n"
 
-#: .././wputaxometas.php:317
+#: .././wputaxometas.php:358
 msgid "Add a picture"
 msgstr "Ajouter une image"
 
-#: .././wputaxometas.php:319
+#: .././wputaxometas.php:360
 msgid "Change this picture"
 msgstr "Modifier cette image"
 
-#: .././wputaxometas.php:339 .././wputaxometas.php:355
-#: .././wputaxometas.php:357 .././wputaxometas.php:374
-#: .././wputaxometas.php:376
+#: .././wputaxometas.php:380 .././wputaxometas.php:400
+#: .././wputaxometas.php:402 .././wputaxometas.php:419
+#: .././wputaxometas.php:421
 msgid "Select a value"
 msgstr "Sélectionner une valeur"
 
-#: .././wputaxometas.php:549
+#: .././wputaxometas.php:558
+msgid "Simple admin for taxo metas"
+msgstr "Administration simple pour les taxo metas"
+
+#: .././wputaxometas.php:607
 msgid "No"
 msgstr "Non"
 
-#: .././wputaxometas.php:550
+#: .././wputaxometas.php:608
 msgid "Yes"
 msgstr "Oui"

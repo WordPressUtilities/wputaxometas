@@ -3,8 +3,9 @@
 /*
 Plugin Name: WPU Taxo Metas
 Plugin URI: https://github.com/WordPressUtilities/wputaxometas
+Update URI: https://github.com/WordPressUtilities/wputaxometas
 Description: Simple admin for taxo metas
-Version: 0.21.2
+Version: 0.22.0
 Author: Darklg
 Author URI: https://darklg.me/
 License: MIT License
@@ -14,12 +15,16 @@ License URI: https://opensource.org/licenses/MIT
 defined('ABSPATH') or die(':(');
 
 class WPUTaxoMetas {
-    public $plugin_version = '0.21.2';
+    public $plugin_version = '0.22.0';
     public $qtranslate = false;
     public $qtranslatex = false;
     public $fields = array();
     public $polylang = false;
     public $wpml = false;
+
+    private $plugin_description;
+    public $settings_update;
+    public $taxonomies;
 
     public function __construct($hooks = true) {
         $this->set_options();
@@ -550,7 +555,11 @@ class WPUTaxoMetas {
         // Get Fields
         $this->fields = apply_filters('wputaxometas_fields', array());
 
-        load_plugin_textdomain('wputaxometas', false, dirname(plugin_basename(__FILE__)) . '/lang/');
+        $lang_dir = dirname(plugin_basename(__FILE__)) . '/lang/';
+        if (!load_plugin_textdomain('wputaxometas', false, $lang_dir)) {
+            load_muplugin_textdomain('wputaxometas', $lang_dir);
+        }
+        $this->plugin_description = __('Simple admin for taxo metas', 'wputaxometas');
 
         // Fix Fields
         foreach ($this->fields as $id => $field) {
