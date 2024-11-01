@@ -1,4 +1,4 @@
-jQuery(document).ready(function($) {
+jQuery(document).ready(function() {
     wputh_taxometas_set_qtranslate();
 });
 

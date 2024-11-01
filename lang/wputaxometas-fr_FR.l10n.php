@@ -1,0 +1,2 @@
+<?php
+return ['domain'=>NULL,'plural-forms'=>NULL,'messages'=>['Add a picture'=>'Ajouter une image','Change this picture'=>'Modifier cette image','Select a value'=>'Sélectionner une valeur','Simple admin for taxo metas'=>'Administration simple pour les taxo metas','No'=>'Non','Yes'=>'Oui'],'language'=>'fr_FR','x-generator'=>'Poedit 3.2.2'];
