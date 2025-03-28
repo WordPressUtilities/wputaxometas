@@ -5,7 +5,7 @@ Plugin Name: WPU Taxo Metas
 Plugin URI: https://github.com/WordPressUtilities/wputaxometas
 Update URI: https://github.com/WordPressUtilities/wputaxometas
 Description: Simple admin for taxo metas
-Version: 0.23.0
+Version: 0.23.1
 Author: Darklg
 Author URI: https://darklg.me/
 Text Domain: wputaxometas
@@ -20,7 +20,7 @@ License URI: https://opensource.org/licenses/MIT
 defined('ABSPATH') or die(':(');
 
 class WPUTaxoMetas {
-    public $plugin_version = '0.23.0';
+    public $plugin_version = '0.23.1';
     public $qtranslate = false;
     public $qtranslatex = false;
     public $fields = array();
@@ -174,6 +174,9 @@ class WPUTaxoMetas {
 
             // Check if field exists, and is in taxonomy
             if (isset($this->fields[$new_key]) && in_array($taxonomy, $this->fields[$new_key]['taxonomies'])) {
+                if($this->fields[$new_key]['readonly']) {
+                    continue;
+                }
                 $cat_meta[$key] = $this->validate_field($this->fields[$new_key], $var);
                 if (function_exists('update_term_meta')) {
                     update_term_meta($t_id, $key, $cat_meta[$key]);
@@ -343,6 +346,10 @@ class WPUTaxoMetas {
 
         if ($field['required']) {
             $idname .= ' required="required"';
+        }
+
+        if($field['readonly']) {
+            $idname .= ' readonly';
         }
 
         $label = '<label for="' . $htmlid . '">' . $field['label'] . ($field['required'] ? ' <b>*</b> ' : '') . '</label>';
@@ -548,7 +555,7 @@ class WPUTaxoMetas {
             }
         }
 
-        $value = strip_tags($value);
+        $value = wp_strip_all_tags($value);
         if (strlen($value) > $max_chars + 3) {
             $value = substr($value, 0, $max_chars) . '...';
         }
@@ -589,6 +596,11 @@ class WPUTaxoMetas {
             // Required field
             if (!isset($field['required'])) {
                 $this->fields[$id]['required'] = false;
+            }
+
+            // Readonly
+            if (!isset($field['readonly'])) {
+                $this->fields[$id]['readonly'] = false;
             }
 
             // Multiple attribute
