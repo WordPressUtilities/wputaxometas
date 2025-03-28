@@ -5,7 +5,7 @@ Plugin Name: WPU Taxo Metas
 Plugin URI: https://github.com/WordPressUtilities/wputaxometas
 Update URI: https://github.com/WordPressUtilities/wputaxometas
 Description: Simple admin for taxo metas
-Version: 0.23.1
+Version: 0.23.2
 Author: Darklg
 Author URI: https://darklg.me/
 Text Domain: wputaxometas
@@ -20,7 +20,7 @@ License URI: https://opensource.org/licenses/MIT
 defined('ABSPATH') or die(':(');
 
 class WPUTaxoMetas {
-    public $plugin_version = '0.23.1';
+    public $plugin_version = '0.23.2';
     public $qtranslate = false;
     public $qtranslatex = false;
     public $fields = array();
@@ -676,7 +676,7 @@ class WPUTaxoMetas {
 }
 
 $WPUTaxoMetas = false;
-add_action('init', 'init_WPUTaxoMetas');
+add_action('init', 'init_WPUTaxoMetas', 20);
 function init_WPUTaxoMetas() {
     global $WPUTaxoMetas;
     $WPUTaxoMetas = new WPUTaxoMetas();
